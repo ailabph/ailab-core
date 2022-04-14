@@ -14,12 +14,12 @@
             "email": "dan@ailab.ph"
         }
     ],
-    "minimum-stability": "beta",
+    "minimum-stability": "stable",
     "require-dev": {
         "phpunit/phpunit": "^9"
     },
     "require": {
         "twig/twig": "^3.0",
-        "composer/composer": "2.3.x-dev"
+        "composer/composer": "2.3.5"
     }
 }
