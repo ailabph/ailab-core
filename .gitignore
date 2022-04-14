@@ -122,3 +122,7 @@ fabric.properties
 
 # Build data
 /build/
+/.idea/.gitignore
+/.idea/ailab-core.iml
+/.idea/modules.xml
+/.idea/vcs.xml
