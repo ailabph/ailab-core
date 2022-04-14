@@ -1,0 +1,19 @@
+{
+    "name": "ailabph/ailab-core",
+    "description": "ailab core framework",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Ailabph\\AilabCore\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Dan Santos",
+            "email": "dan@ailab.ph"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
