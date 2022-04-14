@@ -63,20 +63,9 @@ class Config
     {
         if(empty(self::$OVERRIDE_PATH)){
             $path = dirname( __FILE__ );
-
-            if(strpos($path,"/htdocs/") == false && strpos($path,"/public_html/") == false)
-                Assert::throw("Server path does not contain htdocs or public_html");
-
-            $server_dir = strpos($path,"/htdocs/") !== false ? "/htdocs/" : "/public_html/";
-            $path_split = explode($server_dir,$path);
-            if(count($path_split) !== 2)
-                Assert::throw("unable to get base dir, path_split count(".count($path_split).") in $path is expected to be 2");
-
-            $project_dir = explode("/",$path_split[1]);
-            if(count($project_dir) !== 2)
-                Assert::throw("unable to get base dir, project_dir count(".count($project_dir).") in ".$path[1] . " is expected to be 2");
-
-            return $path_split[0] . $server_dir . $project_dir[0];
+            $to_split = strpos($path,"/vendor/") !== false ? "/vendor/" : "/src";
+            $path_split = explode($to_split,$path);
+            return $path_split[0];
         }
         else{
             return self::$OVERRIDE_PATH;
