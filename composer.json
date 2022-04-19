@@ -20,7 +20,6 @@
     },
     "require": {
         "twig/twig": "^3.0",
-        "composer/composer": "2.3.5",
         "mikey179/vfsstream": "^1.6",
         "ircmaxell/random-lib": "^1.2"
     }
