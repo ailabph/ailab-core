@@ -129,3 +129,5 @@ fabric.properties
 /.idea/vcs.xml
 /.idea/jsLibraryMappings.xml
 /.idea/phpunit.xml
+/.idea/php.xml
+/.idea/*
