@@ -4,6 +4,9 @@ core framework classes
 ---
 ## Changelog
 
+v0.13.0 - site title in Render class
+- added site_title in Render class
+
 v0.12.0 - partial implementation on front end functions
 - added boostrap
 - added popper
