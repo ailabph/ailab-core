@@ -33,6 +33,7 @@ class Render
      */
     static public function page(): string{
         $pageParam = [];
+        $pageParam["SITE_TITLE"] = self::getSiteTitle();
         $pageParam["header_content"] = self::getHeader();
         $pageParam["content"] = self::getContent();
         $pageParam["footer_content"] = self::getFooter();
@@ -40,6 +41,10 @@ class Render
     }
 
     /**
+     * @param string $template_name
+     * @param array $pageParam
+     * @param array $options
+     * @return string
      * @throws Exception
      */
     static public function section(string $template_name, array $pageParam = [], array $options = []): string{
@@ -60,13 +65,36 @@ class Render
         return $render_content;
     }
 
-    static public function resetAll(){
-        self::$HEADER_DATA = [];
-        self::$CONTENT_STACKS = [];
-        self::$FOOTER_DATA = [];
+    static public function resetAll(): void{
+        self::resetSiteTitle();
+        self::resetHeaderData();
+        self::resetContentStacks();
+        self::resetFooterData();
     }
 
 
+
+    # TITLE --------------------------------------------------------------------------------------------------
+
+    static private string $SITE_TITLE = "";
+
+    static public function resetSiteTitle(){
+        self::$SITE_TITLE = "";
+    }
+
+    /**
+     * @param string $site_title
+     */
+    static public function setSiteTitle(string $site_title){
+        self::$SITE_TITLE = $site_title;
+    }
+
+    /**
+     * @return string
+     */
+    static public function getSiteTitle(): string{
+        return self::$SITE_TITLE;
+    }
 
     # HEADER --------------------------------------------------------------------------------------------------
 

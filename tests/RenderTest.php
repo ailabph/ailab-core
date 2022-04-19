@@ -40,6 +40,15 @@ class RenderTest extends TestCase
     }
 
 
+    # SITE TITLE ---------------------------------------------------------------------------------------------------------
+    public function testRenderSiteTitle(){
+        AilabCore\Render::resetAll();
+        AilabCore\Render::setSiteTitle("WEBSITE - HOME");
+        $page_content = AilabCore\Render::page();
+        self::assertStringContainsString("<title>WEBSITE - HOME</title>",$page_content);
+    }
+
+
     # HEADER ---------------------------------------------------------------------------------------------------------
 
     /**
