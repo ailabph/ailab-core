@@ -4,6 +4,17 @@ core framework classes
 ---
 ## Changelog
 
+v0.12.0 - partial implementation on front end functions
+- added boostrap
+- added popper
+- added underscore
+- added bootbox
+- added js helper functions
+  - global and local loading
+  - simplified postForm
+  - ajax reply handler
+  - modal message
+
 v0.3.1
 - fix page template render to be used for project
 

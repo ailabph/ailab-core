@@ -3,24 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ SITE_TITLE }}</title>
-    {{ header_content|raw }}
 
     <!-- FRAMEWORK HEADER SCRIPTS -->
     <!-- JQUERY -->
     <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+    <!-- BOOTSTRAP 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <!-- LOADING LIBRARY -->
     <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
-    <script>
+    <!-- UNDERSCORE UTILITY -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.13.2/underscore-min.js"></script>
+    <!-- BOOTBOX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.5.2/bootbox.min.js"></script>
 
+    <style>
+        .modal-body{
+            color:black;
+        }
+        .successBootbox .modal-header{
+            background-color:#DFF2BF ;
+            color:#4F8A10;
+        }
+        .errorBootbox .modal-header{
+            background-color: #FFBABA;
+            color:#D8000C;
+        }
+    </style>
+
+    <script>
+        function startLoading(divContainer = ""){
+            if(_.isEmpty(divContainer)){
+                $.LoadingOverlay("show");
+            }
+            else{
+                $(divContainer).LoadingOverlay("show");
+            }
+        }
+
+        function doneLoading(divContainer = ""){
+            if(_.isEmpty(divContainer)){
+                $.LoadingOverlay("hide");
+            }
+            else{
+                $(divContainer).LoadingOverlay("hide");
+            }
+        }
+
+        function postForm(targetUrl = "", payload = [], divContainer = "", userCallback){
+            startLoading(divContainer);
+
+            if(_.isEmpty(targetUrl)){
+                targetUrl = window.location.href + "post/";
+            }
+            $.ajax({
+                method: "POST",
+                url: targetUrl,
+                data: payload
+            }).done(function(reply){
+                doneLoading(divContainer);
+                ajaxReplyHandler(reply, userCallback);
+            }).fail(function( jqXHR, errorResponse ) {
+                doneLoading(divContainer);
+                bootbox.alert({message:"Something went wrong",className:"errorBootbox"});
+            });
+        }
+
+        function ajaxReplyHandler(reply, userCallback){
+            try{
+                let data = JSON.parse(reply);
+                if(data.success !== undefined){
+                    modalMessage(data.success,"success",function(){
+                        userCallback(data);
+                    });
+                }
+                else if(data.error !== undefined){
+                    modalMessage(data.error,"error",()=>{});
+                }
+                else{
+                    bootbox.alert({message:"Something went wrong",className:"errorBootbox"});
+                }
+            }catch (e) {
+                bootbox.alert({message:"Something went wrong",className:"errorBootbox"});
+                console.log("ERROR:");
+                console.log(e.message);
+            }
+        }
+
+        function modalMessage(message, type, callback){
+            if(typeof callback == 'undefined') callback = function(){};
+
+            let modalTitle = "Alert";
+            let modalClass = "";
+            if(type === "success"){
+                modalTitle = "Success";
+                modalClass = "successBootbox";
+            }
+            else if(type === "error"){
+                modalTitle = "Error";
+                modalClass = "errorBootbox";
+            }
+
+            bootbox.alert({
+                size: "large",
+                title: modalTitle,
+                message: message,
+                className: modalClass,
+                callback: callback
+            });
+        }
     </script>
+
+    {{ header_content|raw }}
+
 </head>
 <body {{ BODY_ATTRIBUTE }} >
-    {{ content|raw }}
+{{ content|raw }}
 </body>
-    {{ footer_content|raw }}
+{{ footer_content|raw }}
 
-    <!-- FRAMEWORK FOOTER SCRIPTS -->
-    <script>
+<!-- FRAMEWORK FOOTER SCRIPTS -->
+<script>
 
-    </script>
+</script>
 </html>
