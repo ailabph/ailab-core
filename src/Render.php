@@ -36,7 +36,7 @@ class Render
         $pageParam["header_content"] = self::getHeader();
         $pageParam["content"] = self::getContent();
         $pageParam["footer_content"] = self::getFooter();
-        return self::section("_page.twig", $pageParam);
+        return self::section("_page.twig", $pageParam, ["template_path"=>__DIR__ . "/../tpl"]);
     }
 
     /**

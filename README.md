@@ -4,6 +4,9 @@ core framework classes
 ---
 ## Changelog
 
+v0.3.1
+- fix page template render to be used for project
+
 v0.3.0
 - add Render class with test
 - add new methods on Tools class
