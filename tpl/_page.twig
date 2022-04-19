@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ SITE_TITLE }}</title>
+    {{ header_content|raw }}
+
+    <!-- FRAMEWORK HEADER SCRIPTS -->
+    <!-- JQUERY -->
+    <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+    <!-- LOADING LIBRARY -->
+    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
+    <script>
+
+    </script>
+</head>
+<body {{ BODY_ATTRIBUTE }} >
+    {{ content|raw }}
+</body>
+    {{ footer_content|raw }}
+
+    <!-- FRAMEWORK FOOTER SCRIPTS -->
+    <script>
+
+    </script>
+</html>
