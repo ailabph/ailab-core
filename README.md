@@ -4,6 +4,9 @@ core framework classes
 ---
 ## Changelog
 
+v0.13.1
+  - allow force_real_path on getBaseDirectory for test compatability
+
 v0.13.0 - site title in Render class
 - added site_title in Render class
 

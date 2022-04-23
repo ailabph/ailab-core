@@ -56,12 +56,13 @@ class Config
     ];
 
     /**
+     * @param bool $force_real_path
      * @return string
      * @throws Exception
      */
-    static public function getBaseDirectory(): string
+    static public function getBaseDirectory(bool $force_real_path = false): string
     {
-        if(empty(self::$OVERRIDE_PATH)){
+        if(empty(self::$OVERRIDE_PATH) || $force_real_path){
             $path = dirname( __FILE__ );
             $to_split = strpos($path,"/vendor/") !== false ? "/vendor/" : "/src";
             $path_split = explode($to_split,$path);
