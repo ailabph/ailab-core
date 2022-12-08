@@ -57,8 +57,6 @@ class Assert
         $formatted_msg = empty($context) ? $error_message : "Invalid $context, $error_message";
         $formatted_msg = empty($error_tag) ? $formatted_msg : "[$error_tag] $formatted_msg";
 
-        // TODO: Implement Log to File Here
-
         throw new Exception($formatted_msg);
     }
 }
