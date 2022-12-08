@@ -24,6 +24,10 @@ class ConfigLoaderTest extends TestCase
     }
 
     protected function setUp(): void{
+        AilabCore\Config::resetCache();
+        AilabCore\Config::resetOverrideEnv();
+        self::$original_DIR = AilabCore\Config::$CURRENT_DIR;
+
         vfs\vfsStream::setup($this->getTestDir());
         AilabCore\Config::$OVERRIDE_PATH = vfs\vfsStream::url($this->getTestDir()."/");
 
@@ -33,6 +37,10 @@ class ConfigLoaderTest extends TestCase
         $content .= 'db_name = "test_db_name" '.PHP_EOL;
         $content .= 'db_user = "db_user" '.PHP_EOL;
         $content .= 'db_pass = "db_pass" '.PHP_EOL;
+        $content .= '[local]'.PHP_EOL;
+        $content .= 'db_user = "db_user_local" '.PHP_EOL;
+        $content .= '[test]'.PHP_EOL;
+        $content .= 'api = "abc123" '.PHP_EOL;
         $content .= ";*/".PHP_EOL;
         file_put_contents(AilabCore\Config::$OVERRIDE_PATH."/config.ini.php",$content);
         $content = ";<?php die();".PHP_EOL;
@@ -151,6 +159,30 @@ class ConfigLoaderTest extends TestCase
         AilabCore\Config::overrideEnv(AilabCore\Config::ENV["live"]);
         $prop = AilabCore\Config::getPublicOption("test_env",false,true);
         $this->assertStringContainsString("env_value_live",$prop);
+    }
+
+    public function testLocalEnvSpecificOption(){
+        AilabCore\Config::overrideEnv(AilabCore\Config::ENV["local"]);
+        $db_local_user = AilabCore\Config::getConfig()->db_user;
+        self::assertEquals("db_user_local",$db_local_user);
+    }
+
+    public function testLocalEnvCustomOption(){
+        AilabCore\Config::overrideEnv(AilabCore\Config::ENV["local"]);
+        $db_local_user = AilabCore\Config::getCustomOption("db_user");
+        self::assertEquals("db_user_local",$db_local_user);
+    }
+
+    public function testTestEnvCustomOption(){
+        AilabCore\Config::overrideEnv(AilabCore\Config::ENV["test"]);
+        $api = AilabCore\Config::getCustomOption("api");
+        self::assertEquals("abc123",$api);
+    }
+
+    public function testCustomConfigRequired(){
+        AilabCore\Config::overrideEnv(AilabCore\Config::ENV["test"]);
+        self::expectException(Exception::class);
+        AilabCore\Config::getCustomOption("api_2",true);
     }
 
     /**

@@ -40,12 +40,9 @@ class Config
 
     static string $OVERRIDE_PATH = "";
 
-    /** @var config|null  */
-    static private $CONFIG;
-    /** @var array|null  */
-    static private $CONFIG_RAW;
-    /** @var array|null */
-    static private $CONFIG_PUBLIC_RAW;
+    static private Config|null $CONFIG;
+    static private array|null $CONFIG_RAW;
+    static private array|null $CONFIG_PUBLIC_RAW;
 
     const ENV = [
         "test" => "test",
@@ -64,7 +61,7 @@ class Config
     {
         if(empty(self::$OVERRIDE_PATH) || $force_real_path){
             $path = dirname( __FILE__ );
-            $to_split = strpos($path,"/vendor/") !== false ? "/vendor/" : "/src";
+            $to_split = str_contains($path, "/vendor/") ? "/vendor/" : "/src";
             $path_split = explode($to_split,$path);
             return $path_split[0];
         }
@@ -96,7 +93,6 @@ class Config
     }
 
     /**
-     * Checks environment if live, staging or local
      * @return string
      */
     static public function getEnv() : string{
@@ -105,15 +101,21 @@ class Config
         }
         if(
             !isset($_SERVER["REMOTE_ADDR"]) ||
-            (strpos($_SERVER["REMOTE_ADDR"], "127.0.0.1") !== false
-                || strpos($_SERVER["REMOTE_ADDR"], "localhost") !== false)
+            (   str_contains($_SERVER["REMOTE_ADDR"], "127.0.0.1")
+                || str_contains($_SERVER["REMOTE_ADDR"], "localhost")
+            )
         ){
             return self::ENV["local"];
         }
-        else if(strpos(strtolower(self::getScriptDir()),"latest") !== false){
+        else if(
+            str_contains(strtolower(self::getScriptDir()), "latest")
+        ){
             return self::ENV["latest"];
         }
-        else if(strpos(strtolower(self::getScriptDir()),"staging") !== false){
+        else if(
+            str_contains(strtolower(self::getScriptDir()), "staging")
+            || str_contains(strtolower(self::getScriptDir()), "stage")
+        ){
             return self::ENV["staging"];
         }
         else{
@@ -129,7 +131,8 @@ class Config
     /**
      * @throws Exception
      */
-    static private function getIniFile(string $file_name = ""){
+    static private function getIniFile(string $file_name = ""): bool|array
+    {
         if(empty($file_name)){
             $file_name = static::CONFIG_FILE;
         }
@@ -222,17 +225,18 @@ class Config
     }
 
     /**
-     * @param string $option_name
-     * @param bool $must_have_value
-     * @return mixed|string
      * @throws Exception
      */
     static public function getCustomOption(string $option_name, bool $must_have_value = false){
         self::init();
-        if(!isset(self::$CONFIG_RAW[$option_name]) && $must_have_value){
-            Assert::throw("$option_name property does not exist on config");
+        $option_value = self::$CONFIG_RAW[$option_name] ?? "";
+        if(isset(self::$CONFIG_RAW[self::getEnv()]) && isset( self::$CONFIG_RAW[self::getEnv()][$option_name] )){
+            $option_value = self::$CONFIG_RAW[self::getEnv()][$option_name];
         }
-        return self::$CONFIG_RAW[$option_name] ?? "";
+        if(empty($option_value) && $must_have_value){
+            Assert::throw("$option_name config is required");
+        }
+        return $option_value;
     }
 
     /**
@@ -249,6 +253,7 @@ class Config
         $option_value = self::$CONFIG_PUBLIC_RAW[$option_name] ?? "";
         if(isset(self::$CONFIG_PUBLIC_RAW[self::getEnv()])){
             if(isset(self::$CONFIG_PUBLIC_RAW[self::getEnv()][$option_name])){
+                $option_value = self::$CONFIG_PUBLIC_RAW[self::getEnv()][$option_name];
                 $option_value = self::$CONFIG_PUBLIC_RAW[self::getEnv()][$option_name];
             }
         }
