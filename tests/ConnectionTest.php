@@ -11,7 +11,7 @@ class ConnectionTest extends TestCase
     }
 
     public function testGetConnection(){
-        $connection = AilabCore\Connection::getConnection();
+        $connection = AilabCore\Connection::getPrimaryConnection();
         self::assertInstanceOf(PDO::class,$connection,"connection");
         self::assertFalse($connection->inTransaction());
     }
@@ -24,7 +24,7 @@ class ConnectionTest extends TestCase
 
     public function testStartTransaction(){
         AilabCore\Connection::startTransaction();
-        $connection = AilabCore\Connection::getConnection();
+        $connection = AilabCore\Connection::getPrimaryConnection();
         self::assertTrue($connection->inTransaction());
     }
 
@@ -37,7 +37,7 @@ class ConnectionTest extends TestCase
             ." (:type, :tag ) ",
             [":type"=>"type_test",":tag"=>$tag]
         );
-        $last_id = AilabCore\Connection::getConnection()->lastInsertId();
+        $last_id = AilabCore\Connection::getPrimaryConnection()->lastInsertId();
         AilabCore\Connection::commit();
         self::assertEquals(1,$result->rowCount());
         $result = Ailabph\AilabCore\Connection::executeQuery(
@@ -59,7 +59,7 @@ class ConnectionTest extends TestCase
             ." (:type, :tag ) ",
             [":type"=>"type_test",":tag"=>$tag]
         );
-        $last_id = AilabCore\Connection::getConnection()->lastInsertId();
+        $last_id = AilabCore\Connection::getPrimaryConnection()->lastInsertId();
         AilabCore\Connection::rollback();
 
         $result = Ailabph\AilabCore\Connection::executeQuery(
@@ -69,5 +69,39 @@ class ConnectionTest extends TestCase
         $result = Ailabph\AilabCore\Connection::executeQuery(
             "SELECT * FROM meta_options WHERE tag=:tag",[":tag"=>$tag]);
         self::assertEquals(0,$result->rowCount());
+    }
+
+    public function testBypassTransaction(){
+        AilabCore\Connection::startTransaction();
+        $tag_1 = "tag_".AilabCore\Random::getRandomStr();
+        $query_1 = AilabCore\Connection::executeQuery(
+            " INSERT INTO `meta_options` "
+            ." (`type`,`tag`) VALUES "
+            ." (:type, :tag ) ",
+            [":type"=>"type_test",":tag"=>$tag_1]
+        );
+        $last_id_1 = AilabCore\Connection::getPrimaryConnection()->lastInsertId();
+
+        $tag_2 = "tag_".AilabCore\Random::getRandomStr();
+        $query_2 = AilabCore\Connection::executeQuery(
+            query:" INSERT INTO `meta_options` "
+            ." (`type`,`tag`) VALUES "
+            ." (:type, :tag ) ",
+            param: [":type"=>"type_test",":tag"=>$tag_2],
+            use_secondary: true
+        );
+        $last_id_2 = AilabCore\Connection::getSecondaryConnection()->lastInsertId();
+        AilabCore\Connection::rollback();
+
+        $query_1 = Ailabph\AilabCore\Connection::executeQuery(
+            query:"SELECT * FROM meta_options WHERE id=:id",param:[":id"=>$last_id_1]);
+        self::assertEquals(0,$query_1->rowCount());
+
+        $query_2 = Ailabph\AilabCore\Connection::executeQuery(
+            query:"SELECT * FROM meta_options WHERE id=:id",
+            param:[":id"=>$last_id_2],
+            use_secondary: true);
+        self::assertEquals(1,$query_2->rowCount());
+        self::assertEquals($tag_2,$query_2->fetchObject()->tag);
     }
 }
