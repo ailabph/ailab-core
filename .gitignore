@@ -144,3 +144,6 @@ config.ini.php
 /logs/*.log
 /node/node_modules/
 /asset_source/
+/App/
+
+test.php
