@@ -12,7 +12,7 @@ class GeneratorClassPhp
 
     public static function run(){
         $tables = GeneratorExtractTablesData::getTablesInfo();
-        $loader = new FilesystemLoader(Config::getBaseDirectory(). "/tpl");
+        $loader = new FilesystemLoader(__DIR__."/../tpl");
         $twig = new Environment($loader);
 
         foreach ($tables as $table){

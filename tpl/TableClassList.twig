@@ -20,7 +20,7 @@ class {{ table.table_name }}List implements \Iterator,\Countable
         string $select = " * ",
         string $join = ""
     ){
-        $list = new meta_options();
+        $list = new {{ table.table_name }}();
         $dataList = $list->get(where: $where, param: $param,order: $order, select: $select, join: $join);
         if($dataList){
             foreach ($dataList as $data){
