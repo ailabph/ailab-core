@@ -20,7 +20,7 @@
         "phpunit/phpunit": "^9"
     },
     "require": {
-        "twig/twig": "^3.0",
+        "twig/twig": "^3.4.3",
         "mikey179/vfsstream": "^1.6",
         "ircmaxell/random-lib": "^1.2",
         "ext-pdo": "*",
