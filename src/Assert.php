@@ -59,4 +59,11 @@ class Assert
 
         throw new Exception($formatted_msg);
     }
+
+    public static function inTransaction()
+    {
+        if(!Connection::getConnection()->inTransaction()){
+            self::throw("Must be in transaction mode");
+        }
+    }
 }
