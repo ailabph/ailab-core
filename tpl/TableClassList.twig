@@ -1,0 +1,73 @@
+namespace App\DBClassGenerator\DB;
+
+use Exception;
+use JetBrains\PhpStorm\Pure;
+
+class {{ table.table_name }}List implements \Iterator,\Countable
+{
+    /** @var {{ table.table_name }}[] */
+    public array $list = [];
+    private int $key = 0;
+
+    /**
+    * @throws Exception
+    */
+    function __construct(
+        string $where,
+        array $param,
+        string $order = "",
+        string $class = "{{ table.table_name }}X",
+        string $select = " * ",
+        string $join = ""
+    ){
+        $list = new meta_options();
+        $dataList = $list->get(where: $where, param: $param,order: $order, select: $select, join: $join);
+        if($dataList){
+            foreach ($dataList as $data){
+                $class = __NAMESPACE__ . "\\".$class;
+                $item = class_exists($class) ? new $class() : new {{ table.table_name }}();
+                $item->loadValues(data:$data,isNew:false);
+                $this->list[] = $item;
+            }
+        }
+    }
+
+    public function fetch(): {{ table.table_name }}|false{
+        if($this->valid()){
+            $to_return = $this->current();
+            $this->next();
+        }
+        else{
+            $this->rewind();
+            $to_return = false;
+        }
+        return $to_return;
+    }
+
+    #[Pure]
+    public function current(): {{ table.table_name }}{
+        return $this->list[$this->key()];
+    }
+
+    public function next(){
+        $this->key++;
+    }
+
+    public function key(){
+        return $this->key;
+    }
+
+    #[Pure]
+    public function valid(): bool{
+        return isset($this->list[$this->key()]);
+    }
+
+    public function rewind(){
+        $this->key = 0;
+    }
+
+    public function count():int{
+        return count($this->list);
+    }
+
+}
