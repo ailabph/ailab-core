@@ -5,6 +5,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
+            "App\\DBClassGenerator\\DB\\": "App/DBClassGenerator/DB/",
             "Ailabph\\AilabCore\\": "src/"
         }
     },
