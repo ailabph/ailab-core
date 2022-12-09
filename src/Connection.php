@@ -55,6 +55,11 @@ class Connection
         }
     }
 
+    public static function getConnection(bool $secondary_connection = false): PDO
+    {
+        return $secondary_connection ? self::getSecondaryConnection() : self::getPrimaryConnection();
+    }
+
     public static function getPrimaryConnection(): PDO{
         self::init();
         return self::$primary_connection;
