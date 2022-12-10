@@ -4,6 +4,41 @@ core framework classes
 ---
 ## Changelog
 
+v0.22.5
+  - added base class for config public
+  - add logger class
+  - added public config loader with extend support
+  - added top content
+  - added bottom content
+  - ---
+  - improved format in logging
+  - added blank index files
+  - added sample config public
+  - change implementation on hooking to header, footer, top and bottom content
+  - implement logger in render
+
+v0.17.1
+  - fix generating php db class
+
+v0.17
+  - added transaction bypass
+  - added db table info extractor
+  - added generator for php db classes
+  - added base TableClass
+  - improved get connection
+  - add methods in helpers class
+  - 
+
+v0.14
+  - added htaccess, remove index and php ext
+  - add config_public
+  - add logs directory
+  - updated and added methods in assert class
+  - improved config class
+  - added connection class
+  - added time helper class
+  - added methods in tools
+
 v0.13.1
   - allow force_real_path on getBaseDirectory for test compatability
 
