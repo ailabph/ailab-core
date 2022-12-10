@@ -161,8 +161,8 @@ class Render implements Loggable
     /**
      * @return string
      */
-    static public function getSiteTitle(): string{
-        return self::$SITE_TITLE;
+    static public function getSiteTitle(bool $with_dash = false): string{
+        return ($with_dash?" - ":"") . self::$SITE_TITLE;
     }
 
     #endregion
