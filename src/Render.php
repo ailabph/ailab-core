@@ -61,7 +61,6 @@ class Render implements Loggable
             $template_found = true;
         }
 
-
         // check if file in (base)/v/
         if(!$template_found){
             $check_path = Config::getBaseDirectory()."/v/";
@@ -151,16 +150,10 @@ class Render implements Loggable
         self::$SITE_TITLE = "";
     }
 
-    /**
-     * @param string $site_title
-     */
     static public function setSiteTitle(string $site_title){
         self::$SITE_TITLE = $site_title;
     }
 
-    /**
-     * @return string
-     */
     static public function getSiteTitle(bool $with_dash = false): string{
         return ($with_dash?" - ":"") . self::$SITE_TITLE;
     }
