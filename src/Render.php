@@ -218,20 +218,36 @@ class Render implements Loggable
     static private array $CONTENT_STACKS = [];
     static private array $CONTENT_TOP_STACKS = [];
     static private array $CONTENT_BOTTOM_STACKS = [];
-    static private string $CONTENT_BODY_WRAPPER_TWIG = "";
-    static private array $CONTENT_BODY_WRAPPER_PARAM = [];
+    static private string $CONTENT_WRAPPER_TWIG = "_content.twig";
+    static private array $CONTENT_WRAPPER_PARAM = [];
+    static private string $BODY_WRAPPER_TWIG = "_body.twig";
+    static private array $BODY_WRAPPER_PARAM = [];
 
     static public function resetContentStacks(){
         self::$CONTENT_STACKS = [];
         self::$CONTENT_TOP_STACKS = [];
         self::$CONTENT_BOTTOM_STACKS = [];
-        self::$CONTENT_BODY_WRAPPER_TWIG = "_content.twig";
-        self::$CONTENT_BODY_WRAPPER_PARAM = [];
+        self::$CONTENT_WRAPPER_TWIG = "_content.twig";
+        self::$CONTENT_WRAPPER_PARAM = [];
+        self::$BODY_WRAPPER_TWIG = "_body.twig";
+        self::$BODY_WRAPPER_PARAM = [];
+    }
+
+    static public function addBodyWrapper(string $twig, array $param = []){
+        self::$BODY_WRAPPER_TWIG = $twig;
+        self::$BODY_WRAPPER_PARAM = $param;
+    }
+
+    static public function getBodyContent():string{
+        self::$BODY_WRAPPER_PARAM["top_content"] = self::getTopContent();
+        self::$BODY_WRAPPER_PARAM["content"] = self::getContent();
+        self::$BODY_WRAPPER_PARAM["bottom_content"] = self::getBottomContent();
+        return self::pureRender(self::$BODY_WRAPPER_TWIG,self::$BODY_WRAPPER_PARAM);
     }
 
     static public function addContentWrapper(string $twig, array $param = []){
-        self::$CONTENT_BODY_WRAPPER_TWIG = $twig;
-        self::$CONTENT_BODY_WRAPPER_PARAM = $param;
+        self::$CONTENT_WRAPPER_TWIG = $twig;
+        self::$CONTENT_WRAPPER_PARAM = $param;
     }
 
     static public function section(string $twig, array $param = [], array $options = []): string{
@@ -259,8 +275,8 @@ class Render implements Loggable
 
     static public function getContent(): string{
         $content = implode(PHP_EOL, self::$CONTENT_STACKS);
-        self::$CONTENT_BODY_WRAPPER_PARAM["content"] = $content;
-        return self::pureRender(self::$CONTENT_BODY_WRAPPER_TWIG,self::$CONTENT_BODY_WRAPPER_PARAM);
+        self::$CONTENT_WRAPPER_PARAM["content"] = $content;
+        return self::pureRender(self::$CONTENT_WRAPPER_TWIG,self::$CONTENT_WRAPPER_PARAM);
     }
 
     static public function addTopContent(string $script_or_content, bool $first_in_stack = false): void{
@@ -302,9 +318,10 @@ class Render implements Loggable
         self::addLog("rendering page...",__LINE__);
         $pageParam = self::getSiteWideParam();
         $pageParam["header_content"] = self::getHeader();
-        $pageParam["top_content"] = self::getTopContent();
-        $pageParam["content"] = self::getContent();
-        $pageParam["bottom_content"] = self::getBottomContent();
+        $pageParam["body_content"] = self::getBodyContent();
+//        $pageParam["top_content"] = self::getTopContent();
+//        $pageParam["content"] = self::getContent();
+//        $pageParam["bottom_content"] = self::getBottomContent();
         $pageParam["footer_content"] = self::getFooter();
         return self::section("_page.twig", $pageParam);
     }
