@@ -4,6 +4,12 @@ core framework classes
 ---
 ## Changelog
 
+v.0.22.9
+  - fix bug on loading module tpl
+  - refactor get site title
+  - renamed core functions
+  - added body wrapper
+
 v0.22.5
   - added base class for config public
   - add logger class
