@@ -4,6 +4,10 @@ core framework classes
 ---
 ## Changelog
 
+v.0.23.1
+  - fix some methods in tools
+  - execute parts of page after adding content
+
 v.0.22.10
   - implement body wrapper
 
