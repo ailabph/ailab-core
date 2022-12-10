@@ -6,8 +6,10 @@ use Exception;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
-class Render
+class Render implements Loggable
 {
+
+
     public string $template_path = "";
 
     /**
@@ -19,6 +21,16 @@ class Render
     }
 
 
+    #region UTILITIES -----------------------------------------------------------------------------------------------
+
+    /**
+     * @throws Exception
+     */
+    static function addLog(string|array|object $log, int $line)
+    {
+        Logger::add(msg:$log,category: "render", line:$line);
+    }
+
     /**
      * @throws Exception
      */
@@ -27,42 +39,74 @@ class Render
         return new self($options);
     }
 
-
     /**
      * @throws Exception
      */
-    static public function page(): string{
-        $pageParam = [];
-        $pageParam["SITE_TITLE"] = self::getSiteTitle();
-        $pageParam["header_content"] = self::getHeader();
-        $pageParam["content"] = self::getContent();
-        $pageParam["footer_content"] = self::getFooter();
-        return self::section("_page.twig", $pageParam, ["template_path"=>__DIR__ . "/../tpl"]);
-    }
+    static public function pureRender(string $twig, array $param = [], string $twig_path = ""):string{
 
-    /**
-     * @param string $template_name
-     * @param array $pageParam
-     * @param array $options
-     * @return string
-     * @throws Exception
-     */
-    static public function section(string $template_name, array $pageParam = [], array $options = []): string{
-        Assert::isNotEmpty($template_name);
-        $render_content = "";
-        try{
-            $template_path = self::getRenderOptions($options)->template_path;
-            if(empty($template_path)){
-                $template_path = Config::getBaseDirectory() . "/tpl";
+        // fix template extension
+        $twig = str_replace(".php",".twig",$twig);
+        $twig = str_contains($twig,".twig") ? $twig : $twig.".twig";
+
+        self::addLog("passed template_name: $twig",__LINE__);
+
+        // dynamically check and identify template file path
+        $template_found = false;
+        if(!empty($twig_path)){
+            $full_file_path = $twig_path . $twig;
+            self::addLog("check path:$full_file_path",__LINE__);
+            if(!file_exists($full_file_path)){
+                Assert::throw("unable to locate template:$twig in path:$twig_path");
             }
-
-            $loader = new FilesystemLoader($template_path);
-            $twig = new Environment($loader,["cache"=>false]);
-            $render_content = $twig->render($template_name, $pageParam);
-        }catch (Exception $e){
-            Assert::throw("Unable to render $template_name, ".$e->getMessage());
+            $template_found = true;
         }
-        return $render_content;
+
+
+        // check if file in (base)/v/
+        if(!$template_found){
+            $check_path = Config::getBaseDirectory()."/v/";
+            $full_file_path = $check_path . $twig;
+            self::addLog("check path:$full_file_path",__LINE__);
+            if(file_exists($full_file_path)){
+                self::addLog("file exist here",__LINE__);
+                $template_found = true;
+                $twig_path = $check_path;
+            }
+        }
+
+        // check if inside (base)/tpl
+        if(!$template_found){
+            $check_path = Config::getBaseDirectory()."/tpl/";
+            $full_file_path = $check_path . $twig;
+            self::addLog("check path:$full_file_path",__LINE__);
+            if(file_exists($full_file_path)){
+                self::addLog("file exist here",__LINE__);
+                $template_found = true;
+                $twig_path = $check_path;
+            }
+        }
+
+        // check if inside module/tpl
+        if(!$template_found){
+            $check_path = str_replace("src","tpl",__DIR__);
+            $full_file_path = $check_path . $twig;
+            self::addLog("check path:$full_file_path",__LINE__);
+            if(file_exists($full_file_path)){
+                self::addLog("file exist here",__LINE__);
+                $template_found = true;
+                $twig_path = $check_path;
+            }
+        }
+
+        if(!$template_found){
+            Assert::throw("Unable to locate template:$twig");
+        }
+
+        self::addLog("processed template_path: $twig_path",__LINE__);
+
+        $loader = new FilesystemLoader($twig_path);
+        $twig_env = new Environment($loader,["cache"=>false]);
+        return $twig_env->render($twig, $param);
     }
 
     static public function resetAll(): void{
@@ -72,9 +116,34 @@ class Render
         self::resetFooterData();
     }
 
+    static public function getSiteWideParam(): array{
+        $pageParam = [];
+        $pageParam["SITE_TITLE"] = self::getSiteTitle();
+        $pageParam["config"] = Config::getConfig();
+        $pageParam["config_public"] = Config::getPublicConfig();
+        return $pageParam;
+    }
+
+    static public function getContentFromScript(string $script_or_content): string{
+        if(str_contains($script_or_content,".php")){
+            $real_script_path = Config::getBaseDirectory() . $script_or_content;
+            self::addLog("real_script_path:$real_script_path",__LINE__);
+            if(file_exists($real_script_path)){
+                ob_start();
+                require_once($real_script_path);
+                $content = ob_get_contents() ?? "";
+                self::addLog("content from script:$content",__LINE__);
+                ob_end_clean();
+                return $content;
+            }
+        }
+        return $script_or_content;
+    }
+
+    #endregion
 
 
-    # TITLE --------------------------------------------------------------------------------------------------
+    #region TITLE --------------------------------------------------------------------------------------------------
 
     static private string $SITE_TITLE = "";
 
@@ -96,7 +165,11 @@ class Render
         return self::$SITE_TITLE;
     }
 
-    # HEADER --------------------------------------------------------------------------------------------------
+    #endregion
+
+
+
+    #region HEADER --------------------------------------------------------------------------------------------------
 
     static private array $HEADER_DATA = [];
 
@@ -104,47 +177,26 @@ class Render
         self::$HEADER_DATA = [];
     }
 
-    /**
-     * @param string $callable_function
-     * @param object|null $from_object
-     * @throws Exception
-     */
-    static public function addHeader(string $callable_function, $from_object = null){
-        Assert::isNotEmpty($callable_function);
-        self::$HEADER_DATA[] = $callable_function;
-        if(is_object($from_object)){
-            if(!is_callable([$from_object,$callable_function])){
-                Assert::throw("method $callable_function is not callable");
-            }
-            self::$HEADER_DATA[] = $from_object;
+    static public function addHeader(string $script_or_content, bool $first_in_stack = false){
+        $content = self::getContentFromScript($script_or_content);
+        self::addLog("adding header content to stack:$content",__LINE__);
+        if($first_in_stack){
+            array_unshift(self::$HEADER_DATA,$content);
         }
         else{
-            if(!is_callable($callable_function)){
-                Assert::throw("function $callable_function is not callable");
-            }
+            self::$HEADER_DATA[] = $content;
         }
     }
 
-    /**
-     * @throws Exception
-     */
-    static public function getHeader(): string{
-        if(count(self::$HEADER_DATA) == 0) return "";
-
-        if(!is_string(self::$HEADER_DATA[0]))
-            Assert::throw("first argument of header data must be a callable string");
-
-        if(isset(self::$HEADER_DATA[1]) && !is_object(self::$HEADER_DATA[1]))
-            Assert::throw("second argument for header data must be an object");
-
-        if(isset(self::$HEADER_DATA[1])){
-            return call_user_func([self::$HEADER_DATA[1], self::$HEADER_DATA[0]]);
-        }
-
-        return call_user_func(self::$HEADER_DATA[0]);
+    static public function getHeader():string{
+        return implode(PHP_EOL,self::$HEADER_DATA);
     }
 
-    # FOOTER --------------------------------------------------------------------------------------------------
+    #endregion
+
+
+
+    #region FOOTER --------------------------------------------------------------------------------------------------
 
     static private array $FOOTER_DATA = [];
 
@@ -152,53 +204,121 @@ class Render
         self::$FOOTER_DATA = [];
     }
 
-    /**
-     * @throws Exception
-     */
-    static public function addFooter(string $callable_function, $from_object = null){
-        Assert::isNotEmpty($callable_function);
-        self::$FOOTER_DATA[] = $callable_function;
-        if(is_object($from_object)){
-            self::$FOOTER_DATA[] = $from_object;
+    static public function addFooter(string $script_or_content, bool $first_in_stack = false){
+        $content = self::getContentFromScript($script_or_content);
+        self::addLog("adding footer data to stack:$content",__LINE__);
+        if($first_in_stack){
+            array_unshift(self::$FOOTER_DATA,$content);
+        }
+        else{
+            self::$FOOTER_DATA[] = $content;
         }
     }
 
-    /**
-     * @throws Exception
-     */
-    static public function getFooter(): string{
-        if(count(self::$FOOTER_DATA) == 0) return "";
-
-        if(!is_string(self::$FOOTER_DATA[0]))
-            Assert::throw("first argument of header data must be a callable string");
-
-        if(isset(self::$FOOTER_DATA[1]) && !is_object(self::$FOOTER_DATA[1]))
-            Assert::throw("second argument for header data must be an object");
-
-        if(isset(self::$FOOTER_DATA[1])){
-            return call_user_func([self::$FOOTER_DATA[1], self::$FOOTER_DATA[0]]);
-        }
-
-        return call_user_func(self::$FOOTER_DATA[0]);
+    static public function getFooter():string{
+        return implode(PHP_EOL,self::$FOOTER_DATA);
     }
 
+    #endregion
 
-    # CONTENT STACKS ------------------------------------------------------------------------------------------------
+
+
+    #region CONTENT STACKS -------------------------------------------------------------------------------------------
 
     static private array $CONTENT_STACKS = [];
+    static private array $CONTENT_TOP_STACKS = [];
+    static private array $CONTENT_BOTTOM_STACKS = [];
 
     static public function resetContentStacks(){
         self::$CONTENT_STACKS = [];
+        self::$CONTENT_TOP_STACKS = [];
+        self::$CONTENT_BOTTOM_STACKS = [];
     }
 
-    /**
-     * @throws Exception
-     */
-    static public function addContent(string $template_name, array $contentParam = [], array $options =[]){
-        self::$CONTENT_STACKS[] = self::section($template_name, $contentParam, $options);
+    static public function section(string $twig, array $param = [], array $options = []): string{
+        Assert::isNotEmpty($twig);
+        $render_content = "";
+        try{
+            $template_path = self::getRenderOptions($options)->template_path;
+            $render_content = self::pureRender($twig, $param, $template_path);
+        }catch (Exception $e){
+            Assert::throw("Unable to render $twig, ".$e->getMessage());
+        }
+        return $render_content;
+    }
+
+    static public function addContent(string $twig, array $param = [], array $options =[], bool $first_in_stack = false){
+        $content = self::section($twig, $param, $options);
+        if($first_in_stack){
+            array_unshift(self::$CONTENT_STACKS,$content);
+        }
+        else{
+            self::$CONTENT_STACKS[] = $content;
+        }
+
     }
 
     static public function getContent(): string{
-        return implode('', self::$CONTENT_STACKS);
+        return implode(PHP_EOL, self::$CONTENT_STACKS);
     }
+
+    static public function addTopContent(string $script_or_content, bool $first_in_stack = false): void{
+        $content = self::getContentFromScript($script_or_content);
+        self::addLog("adding top content to stack:$content",__LINE__);
+        if($first_in_stack){
+            array_unshift(self::$CONTENT_TOP_STACKS,$content);
+        }
+        else{
+            self::$CONTENT_TOP_STACKS[] = $content;
+        }
+    }
+
+    static public function getTopContent(): string{
+        return implode(PHP_EOL,self::$CONTENT_TOP_STACKS);
+    }
+
+    static public function addBottomContent(string $script_or_content, bool $first_in_stack = false){
+        $content = self::getContentFromScript($script_or_content);
+        self::addLog("adding bottom content to stack:$content",__LINE__);
+        if($first_in_stack){
+            array_unshift(self::$CONTENT_BOTTOM_STACKS,$content);
+        }
+        else{
+            self::$CONTENT_BOTTOM_STACKS[] = $content;
+        }
+    }
+
+    static public function getBottomContent(): string{
+        return implode(PHP_EOL,self::$CONTENT_BOTTOM_STACKS);
+    }
+
+    #endregion
+
+
+    #region RENDER PAGE --------------------------------------------------------------------------------------
+
+    static public function page(): string{
+        self::addLog("rendering page...",__LINE__);
+        $pageParam = self::getSiteWideParam();
+        $pageParam["header_content"] = self::getHeader();
+        $pageParam["top_content"] = self::getTopContent();
+        $pageParam["content"] = self::getContent();
+        $pageParam["bottom_content"] = self::getBottomContent();
+        $pageParam["footer_content"] = self::getFooter();
+        return self::section("_page.twig", $pageParam);
+    }
+
+    static public function addContentAndRenderPage(string $twig, array $param = []):string{
+        self::addLog("adding content from $twig",__LINE__);
+        self::addContent(twig:$twig,param:$param);
+        return self::page();
+    }
+
+    static public function singlePage(string $twig, array $param = []): string{
+        $pageParam = self::getSiteWideParam();
+        $pageParam = array_merge($pageParam,$param);
+        return self::pureRender($twig,$pageParam);
+    }
+
+    #endregion
 }
