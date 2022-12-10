@@ -115,12 +115,15 @@
         }
     </script>
 
-    {{ header_content|raw }}
+{{ header_content|raw }}
 
 </head>
 <body {{ BODY_ATTRIBUTE }} >
+{{ top_content|raw }}
 {{ content|raw }}
+{{ bottom_content|raw }}
 </body>
+
 {{ footer_content|raw }}
 
 <!-- FRAMEWORK FOOTER SCRIPTS -->
