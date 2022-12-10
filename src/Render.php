@@ -8,8 +8,6 @@ use Twig\Loader\FilesystemLoader;
 
 class Render implements Loggable
 {
-
-
     public string $template_path = "";
 
     /**
@@ -123,17 +121,16 @@ class Render implements Loggable
         return $pageParam;
     }
 
-    static public function getContentFromScript(string $script_or_content): string{
+    static public function getContentFromScript(string $script_or_content): object|string
+    {
         if(str_contains($script_or_content,".php")){
             $real_script_path = Config::getBaseDirectory() . $script_or_content;
             self::addLog("real_script_path:$real_script_path",__LINE__);
             if(file_exists($real_script_path)){
-                ob_start();
-                require_once($real_script_path);
-                $content = ob_get_contents() ?? "";
-                self::addLog("content from script:$content",__LINE__);
-                ob_end_clean();
-                return $content;
+                $result = require_once($real_script_path);
+                if(!is_string($result)) Assert::throw("expected string for content");
+                self::addLog("content from script:$result",__LINE__);
+                return $result;
             }
         }
         return $script_or_content;
@@ -170,18 +167,24 @@ class Render implements Loggable
     }
 
     static public function addHeader(string $script_or_content, bool $first_in_stack = false){
-        $content = self::getContentFromScript($script_or_content);
-        self::addLog("adding header content to stack:$content",__LINE__);
         if($first_in_stack){
-            array_unshift(self::$HEADER_DATA,$content);
+            self::addLog("adding header content to first of stack:$script_or_content",__LINE__);
+            array_unshift(self::$HEADER_DATA,$script_or_content);
         }
         else{
-            self::$HEADER_DATA[] = $content;
+            self::addLog("adding header content to end of stack:$script_or_content",__LINE__);
+            self::$HEADER_DATA[] = $script_or_content;
         }
     }
 
     static public function getHeader():string{
-        return implode(PHP_EOL,self::$HEADER_DATA);
+        $header_content = "";
+        foreach (self::$HEADER_DATA as $content){
+            $header_content .= self::getContentFromScript($content);
+            $header_content .= PHP_EOL;
+        }
+        self::addLog("retrieved header:$header_content",__LINE__);
+        return $header_content;
     }
 
     #endregion
@@ -196,18 +199,24 @@ class Render implements Loggable
     }
 
     static public function addFooter(string $script_or_content, bool $first_in_stack = false){
-        $content = self::getContentFromScript($script_or_content);
-        self::addLog("adding footer data to stack:$content",__LINE__);
         if($first_in_stack){
-            array_unshift(self::$FOOTER_DATA,$content);
+            self::addLog("adding footer data to first of stack:$script_or_content",__LINE__);
+            array_unshift(self::$FOOTER_DATA,$script_or_content);
         }
         else{
-            self::$FOOTER_DATA[] = $content;
+            self::addLog("adding footer data to end of stack:$script_or_content",__LINE__);
+            self::$FOOTER_DATA[] = $script_or_content;
         }
     }
 
     static public function getFooter():string{
-        return implode(PHP_EOL,self::$FOOTER_DATA);
+        $footer_content = "";
+        foreach (self::$FOOTER_DATA as $content){
+            $footer_content .= self::getContentFromScript($content);
+            $footer_content .= PHP_EOL;
+        }
+        self::addLog("getting footer content:$footer_content",__LINE__);
+        return $footer_content;
     }
 
     #endregion
@@ -280,33 +289,45 @@ class Render implements Loggable
     }
 
     static public function addTopContent(string $script_or_content, bool $first_in_stack = false): void{
-        $content = self::getContentFromScript($script_or_content);
-        self::addLog("adding top content to stack:$content",__LINE__);
         if($first_in_stack){
-            array_unshift(self::$CONTENT_TOP_STACKS,$content);
+            self::addLog("adding top content to first of stack:$script_or_content",__LINE__);
+            array_unshift(self::$CONTENT_TOP_STACKS,$script_or_content);
         }
         else{
-            self::$CONTENT_TOP_STACKS[] = $content;
+            self::addLog("adding top content to end of stack:$script_or_content",__LINE__);
+            self::$CONTENT_TOP_STACKS[] = $script_or_content;
         }
     }
 
     static public function getTopContent(): string{
-        return implode(PHP_EOL,self::$CONTENT_TOP_STACKS);
+        $top_content = "";
+        foreach (self::$CONTENT_TOP_STACKS as $content){
+            $top_content .= self::getContentFromScript($content);
+            $top_content .= PHP_EOL;
+        }
+        self::addLog("getting top content:$top_content",__LINE__);
+        return $top_content;
     }
 
     static public function addBottomContent(string $script_or_content, bool $first_in_stack = false){
-        $content = self::getContentFromScript($script_or_content);
-        self::addLog("adding bottom content to stack:$content",__LINE__);
         if($first_in_stack){
-            array_unshift(self::$CONTENT_BOTTOM_STACKS,$content);
+            self::addLog("adding bottom content to first of stack:$script_or_content",__LINE__);
+            array_unshift(self::$CONTENT_BOTTOM_STACKS,$script_or_content);
         }
         else{
-            self::$CONTENT_BOTTOM_STACKS[] = $content;
+            self::addLog("adding bottom content to end of stack:$script_or_content",__LINE__);
+            self::$CONTENT_BOTTOM_STACKS[] = $script_or_content;
         }
     }
 
     static public function getBottomContent(): string{
-        return implode(PHP_EOL,self::$CONTENT_BOTTOM_STACKS);
+        $bottom_content = "";
+        foreach (self::$CONTENT_BOTTOM_STACKS as $content){
+            $bottom_content .= self::getContentFromScript($content);
+            $bottom_content .= PHP_EOL;
+        }
+        self::addLog("getting bottom content:$bottom_content",__LINE__);
+        return $bottom_content;
     }
 
     #endregion
