@@ -55,16 +55,20 @@ class Tools
                 $file_name .= $category ."_";
             }
 
-            $logDateTime = TimeHelper::getCurrentTime()->format("Ymd").".log";
-            $file_name .= $logDateTime;
+            $file_name .= TimeHelper::getCurrentTime()->format("Ymd").".log";
+            $formatted_message = "";
+            $logDateTime = TimeHelper::getCurrentTime()->format(TimeHelper::FORMAT_DATE_TIME_AMPM);
+
+            if(self::$lastLogDate != $logDateTime){
+                $formatted_message .= "[".$logDateTime."] ";
+            }
 
             if(empty(self::$lastLogDate)){
                 file_put_contents($file_name, self::LINE_SEPARATOR, FILE_APPEND);
                 self::$lastLogDate = $logDateTime;
             }
 
-            $formatted_message = TimeHelper::getCurrentTime()->format(TimeHelper::FORMAT_DATE_TIME_AMPM);
-            $formatted_message = "[$formatted_message] ".$message;
+            $formatted_message .= $message;
             $formatted_message .= PHP_EOL;
             file_put_contents($file_name, $formatted_message, FILE_APPEND);
 
