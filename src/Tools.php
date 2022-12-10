@@ -4,6 +4,7 @@ namespace Ailabph\AilabCore;
 
 use Exception;
 use Ailabph\AilabCore\UserI;
+use App\DBClassGenerator\DB;
 
 class Tools
 {
@@ -25,7 +26,7 @@ class Tools
     /**
      * @throws Exception
      */
-    static public function getCurrentUser(): UserI{
+    static public function getCurrentUser(): DB\userX{
         if(!self::isLoggedIn()) Assert::throw("unable to retrieve current user, not logged in");
         return $GLOBALS["user"];
     }
@@ -34,7 +35,7 @@ class Tools
 
     #region CHECKERS
     static public function isLoggedIn(): bool{
-        return isset($GLOBALS["user"] )&& is_a($GLOBALS["user"],UserI::class);
+        return isset($GLOBALS["user"]);
     }
     #endregion
 
