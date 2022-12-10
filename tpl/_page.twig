@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ SITE_TITLE }}</title>
+    <title>{{ config_public.site_name|upper }} {{ SITE_TITLE }}</title>
 
     <!-- FRAMEWORK HEADER SCRIPTS -->
     <!-- JQUERY -->
@@ -33,7 +33,7 @@
     </style>
 
     <script>
-        function startLoading(divContainer = ""){
+        function core_startLoading(divContainer = ""){
             if(_.isEmpty(divContainer)){
                 $.LoadingOverlay("show");
             }
@@ -42,7 +42,7 @@
             }
         }
 
-        function doneLoading(divContainer = ""){
+        function core_doneLoading(divContainer = ""){
             if(_.isEmpty(divContainer)){
                 $.LoadingOverlay("hide");
             }
@@ -51,8 +51,8 @@
             }
         }
 
-        function postForm(targetUrl = "", payload = [], divContainer = "", userCallback){
-            startLoading(divContainer);
+        function core_postForm(targetUrl = "", payload = [], divContainer = "", userCallback){
+            core_startLoading(divContainer);
 
             if(_.isEmpty(targetUrl)){
                 targetUrl = window.location.href + "post/";
@@ -62,24 +62,24 @@
                 url: targetUrl,
                 data: payload
             }).done(function(reply){
-                doneLoading(divContainer);
-                ajaxReplyHandler(reply, userCallback);
+                core_doneLoading(divContainer);
+                core_ajaxReplyHandler(reply, userCallback);
             }).fail(function( jqXHR, errorResponse ) {
-                doneLoading(divContainer);
+                core_doneLoading(divContainer);
                 bootbox.alert({message:"Something went wrong",className:"errorBootbox"});
             });
         }
 
-        function ajaxReplyHandler(reply, userCallback){
+        function core_ajaxReplyHandler(reply, userCallback){
             try{
                 let data = JSON.parse(reply);
                 if(data.success !== undefined){
-                    modalMessage(data.success,"success",function(){
+                    core_modalMessage(data.success,"success",function(){
                         userCallback(data);
                     });
                 }
                 else if(data.error !== undefined){
-                    modalMessage(data.error,"error",()=>{});
+                    core_modalMessage(data.error,"error",()=>{});
                 }
                 else{
                     bootbox.alert({message:"Something went wrong",className:"errorBootbox"});
@@ -91,7 +91,7 @@
             }
         }
 
-        function modalMessage(message, type, callback){
+        function core_modalMessage(message, type, callback){
             if(typeof callback == 'undefined') callback = function(){};
 
             let modalTitle = "Alert";
