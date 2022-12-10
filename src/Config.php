@@ -224,6 +224,16 @@ class Config
         return self::$CONFIG;
     }
 
+    static public function getPublicConfig(string $configClass = ""): ConfigPublic{
+        $AppDir = "App\DBClassGenerator\DB\\";
+        $configClass = empty($configClass) ? $configClass : $AppDir . $configClass;
+        $config_public = class_exists($configClass) ? new $configClass() : new ConfigPublic();
+        foreach (Config::$CONFIG_PUBLIC_RAW as $property => $value){
+            $config_public->{$property} = $value;
+        }
+        return $config_public;
+    }
+
     /**
      * @throws Exception
      */
