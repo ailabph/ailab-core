@@ -4,6 +4,9 @@ core framework classes
 ---
 ## Changelog
 
+v.0.22.10
+  - implement body wrapper
+
 v.0.22.9
   - fix bug on loading module tpl
   - refactor get site title
