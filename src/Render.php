@@ -88,7 +88,7 @@ class Render implements Loggable
 
         // check if inside module/tpl
         if(!$template_found){
-            $check_path = str_replace("src","tpl",__DIR__);
+            $check_path = str_replace("src","tpl",__DIR__)."/";
             $full_file_path = $check_path . $twig;
             self::addLog("check path:$full_file_path",__LINE__);
             if(file_exists($full_file_path)){
@@ -168,7 +168,6 @@ class Render implements Loggable
     #endregion
 
 
-
     #region HEADER --------------------------------------------------------------------------------------------------
 
     static private array $HEADER_DATA = [];
@@ -193,7 +192,6 @@ class Render implements Loggable
     }
 
     #endregion
-
 
 
     #region FOOTER --------------------------------------------------------------------------------------------------
@@ -222,17 +220,25 @@ class Render implements Loggable
     #endregion
 
 
-
     #region CONTENT STACKS -------------------------------------------------------------------------------------------
 
     static private array $CONTENT_STACKS = [];
     static private array $CONTENT_TOP_STACKS = [];
     static private array $CONTENT_BOTTOM_STACKS = [];
+    static private string $CONTENT_BODY_WRAPPER_TWIG = "";
+    static private array $CONTENT_BODY_WRAPPER_PARAM = [];
 
     static public function resetContentStacks(){
         self::$CONTENT_STACKS = [];
         self::$CONTENT_TOP_STACKS = [];
         self::$CONTENT_BOTTOM_STACKS = [];
+        self::$CONTENT_BODY_WRAPPER_TWIG = "_content.twig";
+        self::$CONTENT_BODY_WRAPPER_PARAM = [];
+    }
+
+    static public function addContentWrapper(string $twig, array $param = []){
+        self::$CONTENT_BODY_WRAPPER_TWIG = $twig;
+        self::$CONTENT_BODY_WRAPPER_PARAM = $param;
     }
 
     static public function section(string $twig, array $param = [], array $options = []): string{
@@ -259,7 +265,9 @@ class Render implements Loggable
     }
 
     static public function getContent(): string{
-        return implode(PHP_EOL, self::$CONTENT_STACKS);
+        $content = implode(PHP_EOL, self::$CONTENT_STACKS);
+        self::$CONTENT_BODY_WRAPPER_PARAM["content"] = $content;
+        return self::pureRender(self::$CONTENT_BODY_WRAPPER_TWIG,self::$CONTENT_BODY_WRAPPER_PARAM);
     }
 
     static public function addTopContent(string $script_or_content, bool $first_in_stack = false): void{
