@@ -4,6 +4,14 @@ core framework classes
 ---
 ## Changelog
 
+v.0.24.5
+  - new patcher class
+  - implement fingerprint and js cookies
+  - set writeClass method to private
+  - add final page wrapper, removing new lines and html spaces
+  - add empty index on patch folder
+  - fix some methods in tools
+
 v.0.23.1
   - fix some methods in tools
   - execute parts of page after adding content
