@@ -152,3 +152,6 @@ config.ini.php
 /App/
 _global.php
 test.php
+/patch/*
+!/patch/index.php
+/patch_record.json
