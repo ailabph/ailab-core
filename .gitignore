@@ -155,3 +155,5 @@ test.php
 /patch/*
 !/patch/index.php
 /patch_record.json
+!/patch/patch_core_*
+!/patch/core_*
