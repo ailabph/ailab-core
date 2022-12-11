@@ -4,6 +4,11 @@ core framework classes
 ---
 ## Changelog
 
+v.0.25.2
+  - update method get base dir of composer module
+  - implement core patch on patcher
+  - add core patch to set username to unique
+
 v.0.24.5
   - new patcher class
   - implement fingerprint and js cookies
