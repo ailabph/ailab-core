@@ -340,11 +340,9 @@ class Render implements Loggable
         $pageParam = self::getSiteWideParam();
         $pageParam["header_content"] = self::getHeader();
         $pageParam["body_content"] = self::getBodyContent();
-//        $pageParam["top_content"] = self::getTopContent();
-//        $pageParam["content"] = self::getContent();
-//        $pageParam["bottom_content"] = self::getBottomContent();
         $pageParam["footer_content"] = self::getFooter();
-        return self::section("_page.twig", $pageParam);
+        $page_content = self::section("_page.twig", $pageParam);
+        return self::pureRender("_final_page.twig",["page_content"=>$page_content]);
     }
 
     static public function addContentAndRenderPage(string $twig, array $param = []):string{
