@@ -52,16 +52,17 @@ class Config
         "live" => "live",
     ];
 
-    /**
-     * @param bool $force_real_path
-     * @return string
-     * @throws Exception
-     */
-    static public function getBaseDirectory(bool $force_real_path = false): string
+    static public function getBaseDirectory(bool $force_real_path = false, bool $of_core_module = false): string
     {
         if(empty(self::$OVERRIDE_PATH) || $force_real_path){
             $path = dirname( __FILE__ );
-            $to_split = str_contains($path, "/vendor/") ? "/vendor/" : "/src";
+            if($of_core_module){
+                $to_split = "/src";
+            }
+            else{
+                $to_split = str_contains($path, "/vendor/") ? "/vendor/" : "/src";
+            }
+
             $path_split = explode($to_split,$path);
             return $path_split[0];
         }
