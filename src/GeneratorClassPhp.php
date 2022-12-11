@@ -26,7 +26,7 @@ class GeneratorClassPhp
         }
     }
 
-    public static function writeClass(string $classFile, string $table_name){
+    private static function writeClass(string $classFile, string $table_name){
         try{
             $file_location = Config::getBaseDirectory() . "/App/DBClassGenerator/DB/".$table_name.".php";
             $fh = fopen($file_location,"w");
