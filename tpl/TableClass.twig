@@ -3,19 +3,39 @@ use Ailabph\AilabCore\TableClass;
 
 class {{ table.table_name }} extends TableClass
 {
-    protected string $table_name = "{{ table.table_name }}";
-    protected array $dataKeys = [{{ table.dataKeysString|raw }}];
-    protected array $dataKeysPrimary = [{{ table.dataKeysPrimaryString|raw }}];
-    protected array $dataKeysAutoInc = [{{ table.dataKeysAutoIncString|raw }}];
-    protected array $dataKeysUnique = [{{ table.dataKeysUniqueString|raw }}];
-    protected array $required = [{{ table.requiredString|raw }}];
-    protected array $data_properties = [{{ table.data_propertiesString|raw }}];
-    protected array $data_property_types = [{{ table.data_property_typesString|raw }}];
+    const table_name = "{{ table.table_name }}";
+    protected string $table_name = self::table_name;
+
+    const dataKeys = [{{ table.dataKeysString|raw }}];
+    protected array $dataKeys = self::dataKeys;
+
+    const dataKeysPrimary = [{{ table.dataKeysPrimaryString|raw }}];
+    protected array $dataKeysPrimary = self::dataKeysPrimary;
+
+    const dataKeysAutoInc = [{{ table.dataKeysAutoIncString|raw }}];
+    protected array $dataKeysAutoInc = self::dataKeysAutoInc;
+
+    const dataKeysUnique = [{{ table.dataKeysUniqueString|raw }}];
+    protected array $dataKeysUnique = self::dataKeysUnique;
+
+    const data_properties_index = [{{ table.data_properties_indexString|raw }}];
+    protected array $data_properties_index = self::data_properties_index;
+
+    const required = [{{ table.requiredString|raw }}];
+    protected array $required = self::required;
+
+    const data_properties = [{{ table.data_propertiesString|raw }}];
+    protected array $data_properties = self::data_properties;
+
+    const data_property_types = [{{ table.data_property_typesString|raw }}];
+    protected array $data_property_types = self::data_property_types;
+
     protected bool $use_secondary_connection = false;
 
 {% for property in table.properties %}
     public {{ property.object_types|raw }} ${{ property.field|raw }} = {{ property.default_value|raw }};
     protected {{ property.object_types|raw }} ${{ property.field|raw }}_orig = {{ property.default_value|raw }};
+    protected {{ property.object_types|raw }} ${{ property.field|raw }}_default = {{ property.default_value|raw }};
 {% endfor %}
 
     function __construct(array $param = [], bool $secondary_connection = false)
