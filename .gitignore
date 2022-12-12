@@ -137,8 +137,7 @@ config.ini.php
 /uploads/*.JPEG
 /uploads/*.png
 /uploads/*.gif
-/v/*.php
-/v/*.twig
+/v/*
 !/v/index.php
 /backup/
 /phpunit.xml
