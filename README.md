@@ -4,6 +4,23 @@ core framework classes
 ---
 ## Changelog
 
+v.0.39.3
+  - only accept php script to add header
+  - assume passed argument is an executable script
+  - accept only php script tp add to header
+  - add body wrapper twig path
+  - add content wrapper twig path
+  - implement twig path for add content
+  - only accept php script to add top content
+  - refactor pureRender, require twig path
+  - imported scripts to js files
+  - initial core js
+  - fp3 script
+  --- 
+  - remove obfuscation
+  - add additional methods for assert
+  - add getter for core template dir
+
 v.0.28.7
   - implement patch to run on site and core level
   - add index property info
