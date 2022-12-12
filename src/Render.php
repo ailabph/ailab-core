@@ -84,18 +84,6 @@ class Render implements Loggable
             $template_found = true;
         }
 
-//        if(!$template_found){
-//            self::addLog("check if current twig passed exist as is",__LINE__);
-//            if(file_exists($twig)){
-//                $template_found = true;
-//                $twig_file_name = explode("/",$twig);
-//                $twig_file_name = $twig_file_name[count($twig_file_name)-1];
-//                $twig_path = str_replace($twig_file_name,"",$twig);
-//                $twig = $twig_file_name;
-//            }
-//        }
-
-
 
         // check if file in (base)/v/
         if(!$template_found){
@@ -207,14 +195,15 @@ class Render implements Loggable
         self::$HEADER_DATA = [];
     }
 
-    static public function addHeader(string $script_or_content, bool $first_in_stack = false){
+    static public function addHeader(string $script_file,  bool $first_in_stack = false){
+        Assert::isPhpScriptAndExist($script_file);
         if($first_in_stack){
-            self::addLog("adding header content to first of stack:$script_or_content",__LINE__);
-            array_unshift(self::$HEADER_DATA,$script_or_content);
+            self::addLog("adding header content to first of stack:$script_file",__LINE__);
+            array_unshift(self::$HEADER_DATA,$script_file);
         }
         else{
-            self::addLog("adding header content to end of stack:$script_or_content",__LINE__);
-            self::$HEADER_DATA[] = $script_or_content;
+            self::addLog("adding header content to end of stack:$script_file",__LINE__);
+            self::$HEADER_DATA[] = $script_file;
         }
     }
 
