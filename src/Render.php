@@ -46,89 +46,28 @@ class Render implements Loggable
 
     #region UTILITIES -----------------------------------------------------------------------------------------------
 
-    /**
-     * @throws Exception
-     */
     static function addLog(string|array|object $log, int $line)
     {
         Logger::add(msg:$log,category: "render", line:$line);
     }
 
-    /**
-     * @throws Exception
-     */
     static public function getRenderOptions(array $options): Render
     {
         return new self($options);
     }
 
-    /**
-     * @throws Exception
-     */
-    static public function pureRender(string $twig, array $param = [], string $twig_path = ""):string{
+    static public function pureRender(string $twig,string $twig_path, array $param = [] ):string{
 
         // fix template extension
         $twig = str_replace(".php",".twig",$twig);
         $twig = str_replace("/","",$twig);
         $twig = str_contains($twig,".twig") ? $twig : $twig.".twig";
         self::addLog("passed template_name: $twig",__LINE__);
+        $full_file_path = $twig_path . "/" . $twig;
 
-        $template_found = false;
-        if(!empty($twig_path)){
-            self::addLog("checking twig path via passed path",__LINE__);
-            $full_file_path = $twig_path ."/". $twig;
-            self::addLog("checking path:$full_file_path",__LINE__);
-            if(!file_exists($full_file_path)){
-                Assert::throw("unable to locate template:$full_file_path");
-            }
-            $template_found = true;
-        }
+        self::addLog("Rendering $full_file_path",__LINE__);
 
-
-        // check if file in (base)/v/
-        if(!$template_found){
-            self::addLog("checking if file in (base site)/v/",__LINE__);
-            $check_path = Config::getBaseDirectory()."/v/";
-            $full_file_path = $check_path . $twig;
-            self::addLog("check path:$full_file_path",__LINE__);
-            if(file_exists($full_file_path)){
-                self::addLog("file exist here",__LINE__);
-                $twig_path = $check_path;
-                $template_found = true;
-            }
-        }
-
-        // check if inside (base)/tpl
-        if(!$template_found){
-            self::addLog("checking if file in (base site)/tpl/",__LINE__);
-            $check_path = Config::getBaseDirectory()."/tpl/";
-            $full_file_path = $check_path . $twig;
-            self::addLog("check path:$full_file_path",__LINE__);
-            if(file_exists($full_file_path)){
-                self::addLog("file exist here",__LINE__);
-                $template_found = true;
-                $twig_path = $check_path;
-            }
-        }
-
-        // check if inside module/tpl
-        if(!$template_found){
-            self::addLog("checking if file in (module)/tpl/",__LINE__);
-            $check = Config::getBaseDirectory(of_core_module: true) . "/tpl/";
-            $full_file_path = $check_path . $twig;
-            self::addLog("check path:$full_file_path",__LINE__);
-            if(file_exists($full_file_path)){
-                self::addLog("file exist here",__LINE__);
-                $template_found = true;
-                $twig_path = $check_path;
-            }
-        }
-
-        if(!$template_found){
-            Assert::throw("Unable to locate template:$twig");
-        }
-
-        self::addLog("processed template_path: $twig_path",__LINE__);
+        if(!file_exists($full_file_path)) Assert::throw("template file:$full_file_path does not exist");
 
         $loader = new FilesystemLoader($twig_path);
         $twig_env = new Environment($loader,["cache"=>false]);
@@ -288,7 +227,7 @@ class Render implements Loggable
         self::$BODY_WRAPPER_PARAM["top_content"] = self::getTopContent();
         self::$BODY_WRAPPER_PARAM["content"] = self::getContent();
         self::$BODY_WRAPPER_PARAM["bottom_content"] = self::getBottomContent();
-        return self::pureRender(twig:self::$BODY_WRAPPER_TWIG,param: self::$BODY_WRAPPER_PARAM,twig_path: self::$BODY_WRAPPER_TWIG_PATH);
+        return self::pureRender(twig:self::$BODY_WRAPPER_TWIG, twig_path: self::$BODY_WRAPPER_TWIG_PATH,param: self::$BODY_WRAPPER_PARAM);
     }
 
     static public function addContentWrapper(string $twig, array $param = [], string $twig_path = ""){
@@ -301,7 +240,7 @@ class Render implements Loggable
 
     static public function section(string $twig, array $param = [], string $twig_path = ""): string{
         self::addLog("adding content section from template $twig",__LINE__);
-        $section_content = self::pureRender(twig: $twig,param: $param,twig_path:  $twig_path);
+        $section_content = self::pureRender(twig: $twig,twig_path: $twig_path,param: $param,);
         self::addLog("section content:$section_content",__LINE__);
         return $section_content;
     }
@@ -320,7 +259,7 @@ class Render implements Loggable
     static public function getContent(): string{
         $content = implode(PHP_EOL, self::$CONTENT_STACKS);
         self::$CONTENT_WRAPPER_PARAM["content"] = $content;
-        return self::pureRender(twig:self::$CONTENT_WRAPPER_TWIG,param:self::$CONTENT_WRAPPER_PARAM,twig_path:self::$CONTENT_WRAPPER_TWIG_PATH);
+        return self::pureRender(twig:self::$CONTENT_WRAPPER_TWIG,twig_path:self::$CONTENT_WRAPPER_TWIG_PATH ,param:self::$CONTENT_WRAPPER_PARAM);
     }
 
     static public function addTopContent(string $script_file, bool $first_in_stack = false): void{
@@ -378,8 +317,8 @@ class Render implements Loggable
         $pageParam["header_content"] = self::getHeader();
         $pageParam["body_content"] = self::getBodyContent();
         $pageParam["footer_content"] = self::getFooter();
-        $page_content = self::section(twig:"_page.twig", param:$pageParam,twig_path: self::getDefaultCoreTemplateDir();
-        return self::pureRender(twig:"_final_page.twig",param:["page_content"=>$page_content],twig_path: self::getDefaultCoreTemplateDir());
+        $page_content = self::section(twig:"_page.twig", param:$pageParam,twig_path: self::getDefaultCoreTemplateDir());
+        return self::pureRender(twig:"_final_page.twig",twig_path: self::getDefaultCoreTemplateDir(),param:["page_content"=>$page_content]);
     }
 
     static public function addContentAndRenderPage(string $twig, array $param = [], string $twig_path = ""):string{
@@ -391,7 +330,7 @@ class Render implements Loggable
     static public function singlePage(string $twig, array $param = []): string{
         $pageParam = self::getSiteWideParam();
         $pageParam = array_merge($pageParam,$param);
-        return self::pureRender(twig:$twig,param:$pageParam,twig_path: Config::getBaseDirectory(of_core_module: true)."/tpl");
+        return self::pureRender(twig:$twig,twig_path: self::getDefaultCoreTemplateDir(),param:$pageParam);
     }
 
     #endregion
