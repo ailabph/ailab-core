@@ -381,17 +381,28 @@ abstract class TableClass implements TableClassI
 
     public function getOrig(string $property){
         if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
-        return $this->{$property."_orig"};
+        $property_orig = $property . "_orig";
+        if(!property_exists($this,$property_orig)) Assert::throw("property:$property_orig does not exist");
+        return $this->{$property_orig};
+    }
+
+    public function getDefault(string $property){
+        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
+        $property_default = $property . "_default";
+        if(!property_exists($this,$property_default)) Assert::throw("property:$property_default does not exist");
+        return $this->{$property_default};
     }
 
     private function resetOriginalValues(){
         foreach ($this->data_properties as $property){
-            $this->{$property."_orig"} = $this->{$property};
+            $this->{$property."_orig"} = $this->getOrig($property);
         }
     }
 
-    private function resetAllValues(){
-        Assert::throw("reset all values not implemented on db class");
+    protected function resetAllValues(){
+        foreach ($this->data_properties as $property){
+            $this->{$property."_default"} = $this->getDefault($property);
+        }
     }
 
     #endregion
