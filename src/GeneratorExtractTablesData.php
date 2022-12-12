@@ -14,105 +14,97 @@ class GeneratorExtractTablesData
         $tables = self::initiateAndRetrieveTableNames();
         foreach ($tables as $tableDataHeader){
             $tableDataHeader = self::retrieveTableProperties($tableDataHeader);
-            foreach ($tableDataHeader->properties as $property){
+            foreach ($tableDataHeader->properties as $property) {
                 $tableDataHeader->data_properties[] = $property->field;
                 $tableDataHeader->data_property_types[$property->field] = $property->type;
 
-                if(
-                    str_contains($property->type,"char")
-                    || str_contains($property->type,"text")
-                    || str_contains($property->type,"date")
-                ){
-                    $property->object_types = "string";
-                }
-                else if(
-                    str_contains($property->type,"int")
-                ){
-                    $property->object_types = "int";
-                }
-                else if(
-                    str_contains($property->type,"decimal")
-                ){
-                    $property->object_types = "float";
-                }
-
-                if(!empty($property->key)){
-                    $tableDataHeader->dataKeys[] = $property->field;
-                    if($property->key == "PRI"){
-                        $tableDataHeader->dataKeysPrimary[] = $property->field;
-                        $property->object_types .= "|null";
-                    }
-                    if($property->key == "UNI"){
-                        $tableDataHeader->dataKeysUnique[] = $property->field;
-                    }
-                }
-                if($property->extra == "auto_increment"){
-                    $tableDataHeader->dataKeysAutoInc[] = $property->field;
-                }
-                if($property->null == "NO"){
-                    $tableDataHeader->required[] = $property->field;
-                }
-                else{
-                    if($property->key != "PRI"){
-                        $property->object_types .= "|null";
-                    }
-                }
-
-                if(str_contains($property->object_types,"null")){
-                    $property->default_value = "null";
-                }
-                else if(str_contains($property->object_types,"string")){
-                    $property->default_value = "''";
-                }
-                else{
-                    $property->default_value = 0;
-                }
+                self::parseAndCollectKeys($tableDataHeader, $property);
+                self::parseAndCollectPrimaryKeys($tableDataHeader, $property);
+                self::parseAndCollectUniqueKeys($tableDataHeader, $property);
+                self::parseAndCollectAutoIncrement($tableDataHeader, $property);
+                self::parseAndCollectRequiredProperties($tableDataHeader, $property);
+                self::parseAndCollectPropertiesIndex($tableDataHeader, $property);
+                self::setObjectType($property);
+                self::setDefaultValues($property);
             }
-
-            if(count($tableDataHeader->dataKeys) > 0){
-                $tableDataHeader->dataKeysString = implode(",",$tableDataHeader->dataKeys);
-                $tableDataHeader->dataKeysString = "'".$tableDataHeader->dataKeysString."'";
-                $tableDataHeader->dataKeysString = str_replace(",","','",$tableDataHeader->dataKeysString);
-            }
-            
-            if(count($tableDataHeader->dataKeysPrimary) > 0){
-                $tableDataHeader->dataKeysPrimaryString = implode(",",$tableDataHeader->dataKeysPrimary);
-                $tableDataHeader->dataKeysPrimaryString = "'".$tableDataHeader->dataKeysPrimaryString."'";
-                $tableDataHeader->dataKeysPrimaryString = str_replace(",","','",$tableDataHeader->dataKeysPrimaryString);   
-            }
-            
-            if(count($tableDataHeader->dataKeysAutoInc) > 0){
-                $tableDataHeader->dataKeysAutoIncString = implode(",",$tableDataHeader->dataKeysAutoInc);
-                $tableDataHeader->dataKeysAutoIncString = "'".$tableDataHeader->dataKeysAutoIncString."'";
-                $tableDataHeader->dataKeysAutoIncString = str_replace(",","','",$tableDataHeader->dataKeysAutoIncString);   
-            }
-            
-            if(count($tableDataHeader->dataKeysUnique) > 0){
-                $tableDataHeader->dataKeysUniqueString = implode(",",$tableDataHeader->dataKeysUnique);
-                $tableDataHeader->dataKeysUniqueString = "'".$tableDataHeader->dataKeysUniqueString."'";
-                $tableDataHeader->dataKeysUniqueString = str_replace(",","','",$tableDataHeader->dataKeysUniqueString);   
-            }
-            
-            if(count($tableDataHeader->required) > 0){
-                $tableDataHeader->requiredString = implode(",",$tableDataHeader->required);
-                $tableDataHeader->requiredString = "'".$tableDataHeader->requiredString."'";
-                $tableDataHeader->requiredString = str_replace(",","','",$tableDataHeader->requiredString);   
-            }
-            
-            if(count($tableDataHeader->data_properties) > 0){
-                $tableDataHeader->data_propertiesString = implode(",",$tableDataHeader->data_properties);
-                $tableDataHeader->data_propertiesString = "'".$tableDataHeader->data_propertiesString."'";
-                $tableDataHeader->data_propertiesString = str_replace(",","','",$tableDataHeader->data_propertiesString);   
-            }
-            
-            if(count($tableDataHeader->data_property_types) > 0){
-                $tableDataHeader->data_property_typesString = json_encode($tableDataHeader->data_property_types);
-                $tableDataHeader->data_property_typesString = str_replace(["{","}"],"",$tableDataHeader->data_property_typesString);
-                $tableDataHeader->data_property_typesString = str_replace(":","=>",$tableDataHeader->data_property_typesString);
-            }
-            
+            $tableDataHeader->data_propertiesString = Tools::convertArrayOfStringToString($tableDataHeader->data_properties,",","'");
+            $tableDataHeader->dataKeysString = Tools::convertArrayOfStringToString($tableDataHeader->dataKeys,",","'");
+            $tableDataHeader->dataKeysPrimaryString = Tools::convertArrayOfStringToString($tableDataHeader->dataKeysPrimary,",","'");
+            $tableDataHeader->dataKeysUniqueString = Tools::convertArrayOfStringToString($tableDataHeader->dataKeysUnique,",","'");
+            $tableDataHeader->dataKeysAutoIncString = Tools::convertArrayOfStringToString($tableDataHeader->dataKeysAutoInc,",","'");
+            $tableDataHeader->requiredString = Tools::convertArrayOfStringToString($tableDataHeader->required,",","'");
+            $tableDataHeader->data_properties_indexString = Tools::convertArrayOfStringToString($tableDataHeader->data_properties_index,",","'");
         }
         return $tables;
+    }
+
+    private static function parseAndCollectKeys(TableDataHeader $tableDataHeader, TableDataProperty $property){
+        if($property->key == "PRI" || $property->key == "UNI"){
+            $tableDataHeader->dataKeys[] = $property->field;
+        }
+    }
+    private static function parseAndCollectPrimaryKeys(TableDataHeader $tableDataHeader, TableDataProperty $property){
+        if($property->key == "PRI"){
+            $tableDataHeader->dataKeysPrimary[] = $property->field;
+        }
+    }
+    private static function parseAndCollectUniqueKeys(TableDataHeader $tableDataHeader, TableDataProperty $property){
+        if($property->key == "UNI"){
+            $tableDataHeader->dataKeysUnique[] = $property->field;
+        }
+    }
+    private static function parseAndCollectAutoIncrement(TableDataHeader $tableDataHeader, TableDataProperty $property){
+        if($property->extra == "auto_increment"){
+            $tableDataHeader->dataKeysAutoInc[] = $property->field;
+        }
+    }
+    private static function parseAndCollectRequiredProperties(TableDataHeader $tableDataHeader, TableDataProperty $property){
+        if($property->null == "NO" && $property->extra != "auto_increment"){
+            $tableDataHeader->required[] = $property->field;
+        }
+    }
+    private static function parseAndCollectPropertiesIndex(TableDataHeader $tableDataHeader, TableDataProperty $property)
+    {
+        if ($property->key == "MUL") {
+            $tableDataHeader->data_properties_index[] = $property->field;
+        }
+    }
+    private static function setObjectType(TableDataProperty $property){
+        if(
+            str_contains($property->type,"char")
+            || str_contains($property->type,"text")
+            || str_contains($property->type,"date")
+        ){
+            $property->object_types = "string";
+        }
+        else if(
+            str_contains($property->type,"int")
+        ){
+            $property->object_types = "int";
+        }
+        else if(
+            str_contains($property->type,"decimal")
+        ){
+            $property->object_types = "float";
+        }
+        if(empty($property->object_types)) Assert::throw("object type not detected");
+        if($property->null == "YES" || $property->extra == "auto_increment"){
+            $property->object_types .= "|null";
+        }
+    }
+    private static function setDefaultValues(TableDataProperty $property){
+        if(str_contains($property->object_types,"null")){
+            $property->default_value = "null";
+        }
+        else{
+            if($property->object_types == "int" || $property->object_types == "float"){
+                $property->default_value = empty($property->default) ? 0 : $property->default;
+            }
+            else if($property->object_types == "string"){
+                $property->default_value = empty($property->default) ? "''" : "'$property->default'";
+            }
+        }
+
     }
 
     /** @return TableDataHeader[] */
