@@ -257,6 +257,7 @@ class Render implements Loggable
     static private array $CONTENT_WRAPPER_PARAM = [];
     static private string $BODY_WRAPPER_TWIG = "_body.twig";
     static private array $BODY_WRAPPER_PARAM = [];
+    static private string $BODY_WRAPPER_TWIG_PATH = __DIR__."/tpl";
 
     static public function resetContentStacks(){
         self::$CONTENT_STACKS = [];
@@ -265,12 +266,20 @@ class Render implements Loggable
         self::$CONTENT_WRAPPER_TWIG = "_content.twig";
         self::$CONTENT_WRAPPER_PARAM = [];
         self::$BODY_WRAPPER_TWIG = "_body.twig";
+        self::$BODY_WRAPPER_TWIG_PATH = __DIR__."/tpl";
         self::$BODY_WRAPPER_PARAM = [];
     }
 
-    static public function addBodyWrapper(string $twig, array $param = []){
+    static public function addBodyWrapper(string $twig, array $param = [], string $twig_path = ""){
         self::$BODY_WRAPPER_TWIG = $twig;
         self::$BODY_WRAPPER_PARAM = $param;
+        if(!empty($twig_path)){
+            self::$BODY_WRAPPER_TWIG_PATH = $twig_path;
+        }
+        $body_wrapper_twig_file = self::$BODY_WRAPPER_TWIG_PATH . "/" . self::$BODY_WRAPPER_TWIG;
+        if(!file_exists($body_wrapper_twig_file)){
+            Assert::throw("body wrapper file does not exist:$body_wrapper_twig_file");
+        }
     }
 
     static public function getBodyContent():string{
