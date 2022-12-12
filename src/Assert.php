@@ -18,7 +18,6 @@ class Assert
         return true;
     }
 
-
     const IS_GREATER_THAN_MSG = "value is not greater than ";
 
     /**
@@ -60,10 +59,25 @@ class Assert
         throw new Exception($formatted_msg);
     }
 
+    //region CONNECTION RELATED
     public static function inTransaction()
     {
         if(!Connection::getConnection()->inTransaction()){
             self::throw("Must be in transaction mode");
         }
     }
+    #endregion
+
+    #region FILE RELATED
+    public static function isPhpScript(string $script_file, bool $throw = true):bool{
+        $has_php_extension = str_contains($script_file,".php");
+        if(!$has_php_extension && $throw) Assert::throw("script:$script_file is not a valid php file");
+        return $has_php_extension;
+    }
+    public static function isPhpScriptAndExist(string $script_file, bool $throw = true):bool{
+        $is_php_file = self::isPhpScript(script_file:$script_file,throw:$throw);
+        if(!file_exists($script_file) && $throw) Assert::throw("script:$script_file file does not exist");
+        return true;
+    }
+    #endregion
 }
