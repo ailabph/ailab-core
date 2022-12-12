@@ -10,11 +10,24 @@ class Patcher implements Loggable
     public static string $patch_record_json_file = "patch_record.json";
 
     public static function runPatch(bool $regenerate_classes = false){
-        self::runSiteLevelPatch($regenerate_classes);
-        self::runCorePatches($regenerate_classes);
+        self::runSiteLevelPatch();
+        self::runCorePatches();
+
+        // if local, generate classes
+        if(!$regenerate_classes){
+            self::addLog("skipping generation of db classes",__LINE__);
+            return;
+        }
+        if(Config::getEnv() == Config::ENV["local"]){
+            self::addLog("local env detected, generating db class php",__LINE__);
+            GeneratorClassPhp::run();
+        }
+        else{
+            self::addLog("env(".Config::getEnv().") not local, skipping db class generation",__LINE__);
+        }
     }
 
-    public static function runSiteLevelPatch(bool $regenerate_classes = true){
+    public static function runSiteLevelPatch(){
         $patch_record = self::getPatchJsonFile();
         $patch_dir = self::getPatchDirectory(of_core_module: false);
 
@@ -54,22 +67,9 @@ class Patcher implements Loggable
 
         self::addLog("updating patch json file",__LINE__);
         self::updatePatchJsonFile($patch_record);
-
-        // if local, generate classes
-        if(!$regenerate_classes){
-            self::addLog("skipping generation of db classes",__LINE__);
-            return;
-        }
-        if(Config::getEnv() == Config::ENV["local"]){
-            self::addLog("local env detected, generating db class php",__LINE__);
-            GeneratorClassPhp::run();
-        }
-        else{
-            self::addLog("env(".Config::getEnv().") not local, skipping db class generation",__LINE__);
-        }
     }
 
-    static function runCorePatches(bool $generate_classes = false){
+    static function runCorePatches(){
         self::addLog("running core patches",__LINE__);
         $patch_record = self::getPatchJsonFile();
         $patch_dir = self::getPatchDirectory(of_core_module: true);
