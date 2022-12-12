@@ -306,8 +306,8 @@ class Render implements Loggable
         return $section_content;
     }
 
-    static public function addContent(string $twig, array $param = [], array $options =[], bool $first_in_stack = false, string $twig_path = ""){
-        $content = self::section(twig: $twig, param:$param, options:$options,twig_path:$twig_path);
+    static public function addContent(string $twig, array $param = [], bool $first_in_stack = false, string $twig_path = ""){
+        $content = self::section(twig: $twig, param:$param,twig_path:$twig_path);
         if($first_in_stack){
             array_unshift(self::$CONTENT_STACKS,$content);
         }
@@ -320,7 +320,7 @@ class Render implements Loggable
     static public function getContent(): string{
         $content = implode(PHP_EOL, self::$CONTENT_STACKS);
         self::$CONTENT_WRAPPER_PARAM["content"] = $content;
-        return self::pureRender(self::$CONTENT_WRAPPER_TWIG,self::$CONTENT_WRAPPER_PARAM);
+        return self::pureRender(twig:self::$CONTENT_WRAPPER_TWIG,param:self::$CONTENT_WRAPPER_PARAM,twig_path:self::$CONTENT_WRAPPER_TWIG_PATH);
     }
 
     static public function addTopContent(string $script_or_content, bool $first_in_stack = false): void{
