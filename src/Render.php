@@ -223,14 +223,15 @@ class Render implements Loggable
         self::$FOOTER_DATA = [];
     }
 
-    static public function addFooter(string $script_or_content, bool $first_in_stack = false){
+    static public function addFooter(string $script_file, bool $first_in_stack = false){
+        Assert::isPhpScriptAndExist(script_file:$script_file,throw: true);
         if($first_in_stack){
-            self::addLog("adding footer data to first of stack:$script_or_content",__LINE__);
-            array_unshift(self::$FOOTER_DATA,$script_or_content);
+            self::addLog("adding footer data to first of stack:$script_file",__LINE__);
+            array_unshift(self::$FOOTER_DATA,$script_file);
         }
         else{
-            self::addLog("adding footer data to end of stack:$script_or_content",__LINE__);
-            self::$FOOTER_DATA[] = $script_or_content;
+            self::addLog("adding footer data to end of stack:$script_file",__LINE__);
+            self::$FOOTER_DATA[] = $script_file;
         }
     }
 
