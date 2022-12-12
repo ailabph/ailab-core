@@ -299,16 +299,11 @@ class Render implements Loggable
         }
     }
 
-    static public function section(string $twig, array $param = [], array $options = [], string $twig_path = ""): string{
-        Assert::isNotEmpty($twig);
-        $render_content = "";
-        try{
-            $template_path = empty($twig_path) ? self::getRenderOptions($options)->template_path : $twig_path;
-            $render_content = self::pureRender($twig, $param, $template_path);
-        }catch (Exception $e){
-            Assert::throw("Unable to render $twig, ".$e->getMessage());
-        }
-        return $render_content;
+    static public function section(string $twig, array $param = [], string $twig_path = ""): string{
+        self::addLog("adding content section from template $twig",__LINE__);
+        $section_content = self::pureRender(twig: $twig,param: $param,twig_path:  $twig_path);
+        self::addLog("section content:$section_content",__LINE__);
+        return $section_content;
     }
 
     static public function addContent(string $twig, array $param = [], array $options =[], bool $first_in_stack = false, string $twig_path = ""){
