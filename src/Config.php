@@ -15,6 +15,7 @@ class Config
     public string $site_url = "";
     public string $site_front_url = "";
     public string $site_domain = "";
+    public string $theme_url = "";
 
     public string $site_name = "";
     public string $site_tagline = "";
@@ -29,6 +30,8 @@ class Config
     public bool $verbose_log = false;
     public bool $enable_twig_cache = false;
     public bool $force_stop_all_workers = false;
+
+    public bool $enable_otp = true;
 
 
     /** ------------------------------------------------------------------------------------------------------------ */
