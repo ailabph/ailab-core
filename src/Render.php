@@ -82,21 +82,21 @@ class Render implements Loggable
     }
 
     static public function getSiteWideParam(): array{
-        $pageParam = [];
+        $pageParam = Tools::getDefaultPageParam();
         $pageParam["SITE_TITLE"] = self::getSiteTitle();
         $pageParam["config"] = Config::getConfig();
         $pageParam["config_public"] = Config::getPublicConfig();
         return $pageParam;
     }
 
-    static public function getContentFromScript(string $script_file): object|string
+    static public function getContentFromScript(string $script_file): string
     {
         Assert::isPhpScriptAndExist(script_file:  $script_file,throw: true);
         self::addLog("executing script $script_file",__LINE__);
         $script_content = require_once($script_file);
         Assert::isNotEmpty($script_content,"script content from $script_file");
-        self::addLog("script output:$script_file",__LINE__);
-        return $script_file;
+        self::addLog("script output:$script_file:$script_content",__LINE__);
+        return $script_content;
     }
 
     #endregion
@@ -143,8 +143,8 @@ class Render implements Loggable
 
     static public function getHeader():string{
         $header_content = "";
-        foreach (self::$HEADER_DATA as $content){
-            $header_content .= self::getContentFromScript($content);
+        foreach (self::$HEADER_DATA as $script_file){
+            $header_content .= self::getContentFromScript($script_file);
             $header_content .= PHP_EOL;
         }
         self::addLog("retrieved header:$header_content",__LINE__);
@@ -176,8 +176,8 @@ class Render implements Loggable
 
     static public function getFooter():string{
         $footer_content = "";
-        foreach (self::$FOOTER_DATA as $content){
-            $footer_content .= self::getContentFromScript($content);
+        foreach (self::$FOOTER_DATA as $script){
+            $footer_content .= self::getContentFromScript($script);
             $footer_content .= PHP_EOL;
         }
         self::addLog("getting footer content:$footer_content",__LINE__);
@@ -276,8 +276,8 @@ class Render implements Loggable
 
     static public function getTopContent(): string{
         $top_content = "";
-        foreach (self::$CONTENT_TOP_STACKS as $content){
-            $top_content .= self::getContentFromScript($content);
+        foreach (self::$CONTENT_TOP_STACKS as $script){
+            $top_content .= self::getContentFromScript($script);
             $top_content .= PHP_EOL;
         }
         self::addLog("getting top content:$top_content",__LINE__);
