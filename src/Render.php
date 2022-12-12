@@ -323,14 +323,15 @@ class Render implements Loggable
         return self::pureRender(twig:self::$CONTENT_WRAPPER_TWIG,param:self::$CONTENT_WRAPPER_PARAM,twig_path:self::$CONTENT_WRAPPER_TWIG_PATH);
     }
 
-    static public function addTopContent(string $script_or_content, bool $first_in_stack = false): void{
+    static public function addTopContent(string $script_file, bool $first_in_stack = false): void{
+        Assert::isPhpScriptAndExist(script_file: $script_file,throw: true);
         if($first_in_stack){
-            self::addLog("adding top content to first of stack:$script_or_content",__LINE__);
-            array_unshift(self::$CONTENT_TOP_STACKS,$script_or_content);
+            self::addLog("adding top content to first of stack:$script_file",__LINE__);
+            array_unshift(self::$CONTENT_TOP_STACKS,$script_file);
         }
         else{
-            self::addLog("adding top content to end of stack:$script_or_content",__LINE__);
-            self::$CONTENT_TOP_STACKS[] = $script_or_content;
+            self::addLog("adding top content to end of stack:$script_file",__LINE__);
+            self::$CONTENT_TOP_STACKS[] = $script_file;
         }
     }
 
