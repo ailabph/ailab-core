@@ -378,8 +378,8 @@ class Render implements Loggable
         $pageParam["header_content"] = self::getHeader();
         $pageParam["body_content"] = self::getBodyContent();
         $pageParam["footer_content"] = self::getFooter();
-        $page_content = self::section("_page.twig", $pageParam);
-        return self::pureRender(twig:"_final_page.twig",param:["page_content"=>$page_content],twig_path: Config::getBaseDirectory(of_core_module: true)."/tpl");
+        $page_content = self::section(twig:"_page.twig", param:$pageParam,twig_path: self::getDefaultCoreTemplateDir();
+        return self::pureRender(twig:"_final_page.twig",param:["page_content"=>$page_content],twig_path: self::getDefaultCoreTemplateDir());
     }
 
     static public function addContentAndRenderPage(string $twig, array $param = [], string $twig_path = ""):string{
@@ -402,4 +402,8 @@ class Render implements Loggable
     // message
 
     #endregion
+
+    public static function getDefaultCoreTemplateDir():string{
+        return Config::getBaseDirectory(of_core_module: true) . "/tpl";
+    }
 }
