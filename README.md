@@ -4,6 +4,18 @@ core framework classes
 ---
 ## Changelog
 
+v.0.28.7
+  - implement patch to run on site and core level
+  - add index property info
+  - updated config and public config properties
+  - add manual path and page details on render class
+  - add patch to make account code unique
+  - implement default value on reset
+  - patch package_tag as unique
+  - patch some points_log properties as unique
+  - patch product tag as unique
+  - add sample core script
+
 v.0.25.2
   - update method get base dir of composer module
   - implement core patch on patcher
