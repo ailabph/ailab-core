@@ -15,15 +15,13 @@ abstract class TableClass implements TableClassI
     protected array $dataKeysPrimary = [];
     protected array $dataKeysAutoInc = [];
     protected array $dataKeysUnique = [];
+    protected array $data_properties_index = [];
     protected array $required = [];
     protected array $data_properties = [];
     protected array $data_property_types = [];
     protected bool $use_secondary_connection = false;
     protected PDO $pdoConnection;
 
-    /**
-     * @throws Exception
-     */
     public function __construct(array $param, bool $secondary_connection = false){
         if(empty($this->table_name)) Assert::throw("table name required");
         if(empty($this->data_properties)) Assert::throw("data properties required");
@@ -35,9 +33,6 @@ abstract class TableClass implements TableClassI
 
     #region QUERY / UPDATE / DELETE
 
-    /**
-     * @throws Exception
-     */
     #[ArrayShape(["where" => "string", "param" => "array"])]
     private function buildWhereParamForQuery(bool $throwIfNoKeys = true):array{
         $where = "";
@@ -86,9 +81,6 @@ abstract class TableClass implements TableClassI
         return ["where"=>$where,"param"=>$param];
     }
 
-    /**
-     * @throws Exception
-     */
     private function getRecord(string $where = "", array $param = [], bool $getAll = false, string $order = "", string $select = " * ", string $join = ""): array|object|false{
         if(empty($where)){
             $whereParam = $this->buildWhereParamForQuery(throwIfNoKeys: false);
@@ -131,18 +123,12 @@ abstract class TableClass implements TableClassI
         return $items;
     }
 
-    /**
-     * @throws Exception
-     */
     private function getRecordAndLoadValues(){
         if($item = $this->getRecord()){
             $this->loadValues(data:$item,isNew: false);
         }
     }
 
-    /**
-     * @throws Exception
-     */
     public function save(string $where = "", array $param = []){
         if(!$this->hasAnyChanges()) return;
         if($this->isNew()){
@@ -153,9 +139,6 @@ abstract class TableClass implements TableClassI
         }
     }
 
-    /**
-     * @throws Exception
-     */
     private function update(string $where = "", array $param = []){
         if(!$this->hasAnyChanges()) {
             $error_message = "nothing to update, property has no changes";
@@ -215,9 +198,6 @@ abstract class TableClass implements TableClassI
 
     }
 
-    /**
-     * @throws Exception
-     */
     private function insert(){
         if(!$this->hasAnyValue()) Assert::throw("Nothing to insert");
         $insertProperties = "";
@@ -279,9 +259,6 @@ abstract class TableClass implements TableClassI
         $this->resetOriginalValues();
     }
 
-    /**
-     * @throws Exception
-     */
     public function delete(bool $softDelete = false){
         if($this->isNew()) Assert::throw("unable to delete a new record");
         $whereParam = $this->buildWhereParamForQuery(throwIfNoKeys: true);
@@ -316,9 +293,6 @@ abstract class TableClass implements TableClassI
 
     #endregion END OF QUERY / UPDATE / INSERT / DELETE
 
-    /**
-     * @throws Exception
-     */
     public function get(string $where = "", array $param = [], string $order = "", string $select = " * ", string $join = ""): object|bool|array
     {
         return $this->getRecord(where:$where,param: $param,getAll: true,order: $order,select: $select,join: $join);
@@ -335,9 +309,6 @@ abstract class TableClass implements TableClassI
         return !$this->isNew();
     }
 
-    /**
-     * @throws Exception
-     */
     public function loadValues(array|object $data, bool $isNew = false, array $exclude = [], bool $manualLoad = false, bool $strict = false){
         $this->isNew = $isNew;
         foreach ($data as $property => $value){
@@ -359,18 +330,12 @@ abstract class TableClass implements TableClassI
         }
     }
 
-    /**
-     * @throws Exception
-     */
     public function hasChange(string $property): bool{
         if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist in this table");
         if(!property_exists($this,$property."_orig")) Assert::throw("original property:$property does not exist");
         return $this->{$property} != $this->{$property."_orig"};
     }
 
-    /**
-     * @throws Exception
-     */
     public function hasAnyChanges():bool{
         $hasChanges = false;
         foreach($this->data_properties as $property){
@@ -401,9 +366,6 @@ abstract class TableClass implements TableClassI
         return $hasValue;
     }
 
-    /**
-     * @throws Exception
-     */
     public function refresh(){
         if($this->isNew()) return;
         $this->getRecordAndLoadValues();
@@ -417,9 +379,6 @@ abstract class TableClass implements TableClassI
         return $this->getTableName(true).".`$prop`";
     }
 
-    /**
-     * @throws Exception
-     */
     public function getOrig(string $property){
         if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
         return $this->{$property."_orig"};
@@ -431,38 +390,8 @@ abstract class TableClass implements TableClassI
         }
     }
 
-    /**
-     * @throws Exception
-     */
     private function resetAllValues(){
-        foreach ($this->data_properties as $property){
-            if(in_array($property,$this->dataKeysAutoInc)){
-                $this->{$property} = null;
-                continue;
-            }
-
-            if(!in_array($property,$this->required)){
-                $this->{$property} = null;
-            }
-
-            $property_type = $this->data_property_types[$property];
-            if(empty($property_type)) Assert::throw("no property type for $property");
-
-            if(
-                str_contains($property_type,"char")
-                || str_contains($property_type,"text")
-                || str_contains($property_type,"date")
-            ){
-                $this->{$property} = "";
-                continue;
-            }
-            if(
-                str_contains($property_type,"decimal")
-                || str_contains($property_type,"int")
-            ){
-                $this->{$property} = 0;
-            }
-        }
+        Assert::throw("reset all values not implemented on db class");
     }
 
     #endregion
