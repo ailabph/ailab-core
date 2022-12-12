@@ -20,6 +20,9 @@ class TableDataHeader
     public array $required = [];
     public string $requiredString = "";
 
+    public array $data_properties_index = [];
+    public string $data_properties_indexString = "";
+
     public array $data_properties = [];
     public string $data_propertiesString = "";
 
