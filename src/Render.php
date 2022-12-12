@@ -254,6 +254,7 @@ class Render implements Loggable
     static private array $CONTENT_TOP_STACKS = [];
     static private array $CONTENT_BOTTOM_STACKS = [];
     static private string $CONTENT_WRAPPER_TWIG = "_content.twig";
+    static private string $CONTENT_WRAPPER_TWIG_PATH = __DIR__ . "/tpl";
     static private array $CONTENT_WRAPPER_PARAM = [];
     static private string $BODY_WRAPPER_TWIG = "_body.twig";
     static private array $BODY_WRAPPER_PARAM = [];
@@ -264,6 +265,7 @@ class Render implements Loggable
         self::$CONTENT_TOP_STACKS = [];
         self::$CONTENT_BOTTOM_STACKS = [];
         self::$CONTENT_WRAPPER_TWIG = "_content.twig";
+        self::$CONTENT_WRAPPER_TWIG_PATH = __DIR__ . "/tpl";
         self::$CONTENT_WRAPPER_PARAM = [];
         self::$BODY_WRAPPER_TWIG = "_body.twig";
         self::$BODY_WRAPPER_TWIG_PATH = __DIR__."/tpl";
@@ -289,9 +291,12 @@ class Render implements Loggable
         return self::pureRender(twig:self::$BODY_WRAPPER_TWIG,param: self::$BODY_WRAPPER_PARAM,twig_path: self::$BODY_WRAPPER_TWIG_PATH);
     }
 
-    static public function addContentWrapper(string $twig, array $param = []){
+    static public function addContentWrapper(string $twig, array $param = [], string $twig_path = ""){
         self::$CONTENT_WRAPPER_TWIG = $twig;
         self::$CONTENT_WRAPPER_PARAM = $param;
+        if(!empty($twig_path)){
+            self::$CONTENT_WRAPPER_TWIG_PATH = $twig_path;
+        }
     }
 
     static public function section(string $twig, array $param = [], array $options = [], string $twig_path = ""): string{
