@@ -150,19 +150,14 @@ class Render implements Loggable
         return $pageParam;
     }
 
-    static public function getContentFromScript(string $script_or_content): object|string
+    static public function getContentFromScript(string $script_file): object|string
     {
-        if(str_contains($script_or_content,".php")){
-            $real_script_path = Config::getBaseDirectory() . $script_or_content;
-            self::addLog("real_script_path:$real_script_path",__LINE__);
-            if(file_exists($real_script_path)){
-                $result = require_once($real_script_path);
-                if(!is_string($result)) Assert::throw("expected string for content");
-                self::addLog("content from script:$result",__LINE__);
-                return $result;
-            }
-        }
-        return $script_or_content;
+        Assert::isPhpScriptAndExist(script_file:  $script_file,throw: true);
+        self::addLog("executing script $script_file",__LINE__);
+        $script_content = require_once($script_file);
+        Assert::isNotEmpty($script_content,"script content from $script_file");
+        self::addLog("script output:$script_file",__LINE__);
+        return $script_file;
     }
 
     #endregion
