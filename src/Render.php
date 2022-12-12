@@ -286,7 +286,7 @@ class Render implements Loggable
         self::$BODY_WRAPPER_PARAM["top_content"] = self::getTopContent();
         self::$BODY_WRAPPER_PARAM["content"] = self::getContent();
         self::$BODY_WRAPPER_PARAM["bottom_content"] = self::getBottomContent();
-        return self::pureRender(self::$BODY_WRAPPER_TWIG,self::$BODY_WRAPPER_PARAM);
+        return self::pureRender(twig:self::$BODY_WRAPPER_TWIG,param: self::$BODY_WRAPPER_PARAM,twig_path: self::$BODY_WRAPPER_TWIG_PATH);
     }
 
     static public function addContentWrapper(string $twig, array $param = []){
