@@ -11,6 +11,7 @@ abstract class TableClass implements TableClassI
 {
     const UNDEFINED_STRING = "ailab_core_undefined";
     const UNDEFINED_NUMBER = -987654321;
+    const BASE_NAME_SPACE = "App\DBClassGenerator\DB";
 
     private bool $isNew = true;
     protected string $table_name = "";
