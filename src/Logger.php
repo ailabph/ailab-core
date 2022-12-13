@@ -9,7 +9,7 @@ class Logger
     /**
      * @throws Exception
      */
-    public static function add(string|array|object $msg, string $category, int $line): void{
+    public static function add(string|array|object $msg, string $category, int $line, bool $always_write = false): void{
         Assert::isNotEmpty($category,"log category");
         $call_stack = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,3);
         if(empty($call_stack)) Assert::throw("unable to log, call stack empty");
@@ -24,6 +24,6 @@ class Logger
 
         $build_log = "[$file_source:$line] $method -> $msg";
 
-        Tools::log(message:$build_log,category: $category);
+        Tools::log(message:$build_log,category: $category,force_write: $always_write);
     }
 }
