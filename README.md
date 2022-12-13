@@ -4,6 +4,15 @@ core framework classes
 ---
 ## Changelog
 
+v.0.43.2
+  - add log pure
+  - implement default value to required that triggers an error if not replaced
+  - set sql mode to strict
+  - check required values are set before saving
+---
+  - improve sql to php types
+  - code improvements
+
 v.0.39.3
   - only accept php script to add header
   - assume passed argument is an executable script
