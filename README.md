@@ -4,6 +4,34 @@ core framework classes
 ---
 ## Changelog
 
+v.0.50.17
+  - implement core module for codes
+  - implement core module for package_header
+  - implement core module for package_variant
+  - implement core module for points_log
+  - implement core module for products
+  - implement core module for account
+  - implement core module for user
+  ---
+  - patch sponsor_id and placement_id
+  - patch account and wallet snapshot in points_log
+  - patch add gen_level in points_log
+  - patch add sponsor_level in points_log
+  - patch add data_value in points_log
+  - patch add data_value_remarks in points_log
+  - patch add product_id in points_log
+  - patch add product_tag in points_log
+  - patch add variant_id in points_log
+  - patch add variant_tag in points_log
+  - patch add product_srp in points_log
+  - patch add product_dp in points_log
+  - patch add bonus percentage in points_log
+  - add option force write in logger
+  - always record actions in patching
+  - implement some core helper methods in tools
+  - code improvements
+  
+
 v.0.43.4
   - add undefined constants and exclude from get query
   - allow null on default values
