@@ -93,7 +93,7 @@ class ToolsTest extends TestCase
     public function testImportValuesFromArrayToObject(){
         $test_obj = (object)["first_name"=>"","last_name"=>""];
         $test_array = ["first_name"=>"bob","last_name"=>"joe","age"=>23];
-        Tools::importValuesFromArrayToObject($test_array,$test_obj);
+        Tools::importValuesToObject($test_array,$test_obj);
         self::assertEquals("bob",$test_obj->first_name);
         self::assertEquals("joe",$test_obj->last_name);
         self::assertFalse(isset($test_obj->age),"isset test_obj->age");
@@ -103,6 +103,6 @@ class ToolsTest extends TestCase
         $test_obj = (object)["first_name"=>""];
         $test_array = ["last_name"=>"joe"];
         self::expectException(Exception::class);
-        Tools::importValuesFromArrayToObject($test_array,$test_obj,true);
+        Tools::importValuesToObject($test_array,$test_obj,true);
     }
 }
