@@ -4,6 +4,10 @@ core framework classes
 ---
 ## Changelog
 
+v.0.43.4
+  - add undefined constants and exclude from get query
+  - allow null on default values
+
 v.0.43.2
   - add log pure
   - implement default value to required that triggers an error if not replaced
