@@ -8,7 +8,7 @@ class TableDataProperty
     public string $type = "";
     public string $null = "";
     public string $key = "";
-    public string $default = "";
+    public string|null $default = "";
     public string $extra = "";
     public string $object_types = "";
     public string $default_value = "";
