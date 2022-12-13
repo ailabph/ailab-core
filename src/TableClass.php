@@ -9,6 +9,8 @@ use PDO;
 
 abstract class TableClass implements TableClassI
 {
+    const UNDEFINED_STRING = "ailab_core_undefined";
+
     private bool $isNew = true;
     protected string $table_name = "";
     protected array $dataKeys = [];
@@ -31,7 +33,92 @@ abstract class TableClass implements TableClassI
         if(count($param) > 0) $this->getRecordAndLoadValues();
     }
 
-    #region QUERY / UPDATE / DELETE
+    #region GETTERS
+
+    public function getOrig(string $property){
+        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
+        $property_orig = $property . "_orig";
+        if(!property_exists($this,$property_orig)) Assert::throw("property:$property_orig does not exist");
+        return $this->{$property_orig};
+    }
+
+    public function getDefault(string $property){
+        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
+        $property_default = $property . "_default";
+        if(!property_exists($this,$property_default)) Assert::throw("property:$property_default does not exist");
+        return $this->{$property_default};
+    }
+
+    public function getTableName(bool $forQuery = false): string{
+        return $forQuery ? "`$this->table_name`" : $this->table_name;
+    }
+
+    public function getType(string $property): string{
+        self::propertyExists($property);
+        if(!isset($this->data_property_types[$property]))
+            Assert::throw("property:$property does not have a type in ".self::getTableName());
+        return strtolower($this->data_property_types[$property]);
+    }
+
+    #endregion
+
+
+
+    #region CHECKERS
+
+    public function isNew(): bool{
+        return $this->isNew;
+    }
+
+    #[Pure] public function recordExists(): bool{
+        return !$this->isNew();
+    }
+
+    public function propertyExists(string $property): bool{
+        if(!in_array($property,$this->data_properties)){
+            Assert::throw("property:$property does not exist in ".$this->getTableName());
+        }
+        return true;
+    }
+
+    public function hasChange(string $property): bool{
+        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist in this table");
+        if(!property_exists($this,$property."_orig")) Assert::throw("original property:$property does not exist");
+        return $this->{$property} != $this->{$property."_orig"};
+    }
+
+    public function hasAnyChanges():bool{
+        $hasChanges = false;
+        foreach($this->data_properties as $property){
+            if($this->hasChange($property)){
+                $hasChanges = true;
+                break;
+            }
+        }
+        return $hasChanges;
+    }
+
+    public function hasValue(string $property): bool{
+        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
+        return !is_null($this->{$property});
+    }
+
+    public function hasAnyValue():bool{
+        $hasValue = false;
+        foreach ($this->data_properties as $property) {
+            if($this->hasValue($property)){
+                $hasValue = true;
+                break;
+            }
+        }
+        return $hasValue;
+    }
+
+    #endregion END CHECKERS
+
+
+
+    #region QUERY ACTIONS
 
     #[ArrayShape(["where" => "string", "param" => "array"])]
     private function buildWhereParamForQuery(bool $throwIfNoKeys = true):array{
@@ -79,6 +166,11 @@ abstract class TableClass implements TableClassI
         }
 
         return ["where"=>$where,"param"=>$param];
+    }
+
+    public function get(string $where = "", array $param = [], string $order = "", string $select = " * ", string $join = ""): object|bool|array
+    {
+        return $this->getRecord(where:$where,param: $param,getAll: true,order: $order,select: $select,join: $join);
     }
 
     private function getRecord(string $where = "", array $param = [], bool $getAll = false, string $order = "", string $select = " * ", string $join = ""): array|object|false{
@@ -131,6 +223,7 @@ abstract class TableClass implements TableClassI
 
     public function save(string $where = "", array $param = []){
         if(!$this->hasAnyChanges()) return;
+        self::checkRequiredValues();
         if($this->isNew()){
             $this->insert();
         }
@@ -291,23 +384,17 @@ abstract class TableClass implements TableClassI
         $this->resetOriginalValues();
     }
 
-    #endregion END OF QUERY / UPDATE / INSERT / DELETE
-
-    public function get(string $where = "", array $param = [], string $order = "", string $select = " * ", string $join = ""): object|bool|array
-    {
-        return $this->getRecord(where:$where,param: $param,getAll: true,order: $order,select: $select,join: $join);
+    public function refresh(){
+        if($this->isNew()) return;
+        $this->getRecordAndLoadValues();
     }
+
+    #endregion END OF QUERY ACTIONS
+
 
     #region UTILITIES
 
-    public function isNew(): bool{
-        return $this->isNew;
-    }
 
-    #[Pure]
-    public function recordExists(): bool{
-        return !$this->isNew();
-    }
 
     public function loadValues(array|object $data, bool $isNew = false, array $exclude = [], bool $manualLoad = false, bool $strict = false){
         $this->isNew = $isNew;
@@ -330,67 +417,8 @@ abstract class TableClass implements TableClassI
         }
     }
 
-    public function hasChange(string $property): bool{
-        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist in this table");
-        if(!property_exists($this,$property."_orig")) Assert::throw("original property:$property does not exist");
-        return $this->{$property} != $this->{$property."_orig"};
-    }
-
-    public function hasAnyChanges():bool{
-        $hasChanges = false;
-        foreach($this->data_properties as $property){
-            if($this->hasChange($property)){
-                $hasChanges = true;
-                break;
-            }
-        }
-        return $hasChanges;
-    }
-
-    /**
-     * Value includes empty string or 0
-     */
-    public function hasValue(string $property): bool{
-        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
-        return !is_null($this->{$property});
-    }
-
-    public function hasAnyValue():bool{
-        $hasValue = false;
-        foreach ($this->data_properties as $property) {
-            if($this->hasValue($property)){
-                $hasValue = true;
-                break;
-            }
-        }
-        return $hasValue;
-    }
-
-    public function refresh(){
-        if($this->isNew()) return;
-        $this->getRecordAndLoadValues();
-    }
-
-    public function getTableName(bool $forQuery = false): string{
-        return $forQuery ? "`$this->table_name`" : $this->table_name;
-    }
-
     #[Pure] private function wrapPropertyForQuery(string $prop): string{
         return $this->getTableName(true).".`$prop`";
-    }
-
-    public function getOrig(string $property){
-        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
-        $property_orig = $property . "_orig";
-        if(!property_exists($this,$property_orig)) Assert::throw("property:$property_orig does not exist");
-        return $this->{$property_orig};
-    }
-
-    public function getDefault(string $property){
-        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
-        $property_default = $property . "_default";
-        if(!property_exists($this,$property_default)) Assert::throw("property:$property_default does not exist");
-        return $this->{$property_default};
     }
 
     private function resetOriginalValues(){
@@ -405,5 +433,22 @@ abstract class TableClass implements TableClassI
         }
     }
 
-    #endregion
+    protected function checkRequiredValues(){
+        foreach ($this->required as $property) {
+            if(in_array($property,$this->dataKeysAutoInc)) continue;
+            $property_type = Tools::getPhpTypeFromSqlType($this->getType($property));
+            if($property_type == Tools::INT || $property_type == Tools::FLOAT){
+                if($this->{$property} == -999){
+                    Assert::throw("Unable to save, property:$property is required");
+                }
+            }
+            if($property_type == Tools::STRING){
+                if($this->{$property} == self::UNDEFINED_STRING){
+                    Assert::throw("Unable to save, property:$property is required");
+                }
+            }
+        }
+    }
+
+    #endregion END OF UTILITIES
 }
