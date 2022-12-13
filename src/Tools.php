@@ -84,13 +84,13 @@ class Tools
             }
 
             if(empty(self::$lastLogDate)){
-                file_put_contents($file_name, self::LINE_SEPARATOR, FILE_APPEND);
+                self::logPure(log:self::LINE_SEPARATOR,file_name: $file_name);
                 self::$lastLogDate = $logDateTime;
             }
 
             $formatted_message .= $message;
             $formatted_message .= PHP_EOL;
-            file_put_contents($file_name, $formatted_message, FILE_APPEND);
+            self::logPure(log:$formatted_message,file_name: $file_name);
 
             if($print_trace){
                 try{
@@ -108,7 +108,6 @@ class Tools
 
         }
     }
-
 
     /**
      * @throws Exception
