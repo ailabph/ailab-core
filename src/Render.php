@@ -15,7 +15,7 @@ class Render implements Loggable
      */
     public function __construct(array $options = [])
     {
-        Tools::importValuesFromArrayToObject($options,$this);
+        Tools::importValuesToObject($options,$this);
     }
 
     public static string $PAGE_NAME = "";
