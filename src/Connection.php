@@ -46,7 +46,7 @@ class Connection
                     "mysql:host=".Config::getConfig()->db_host.";dbname=".Config::getConfig()->db_name,
                     Config::getConfig()->db_user,
                     Config::getConfig()->db_pass,
-                    [PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'"]);
+                    [PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8', sql_mode='STRICT_ALL_TABLES'"]);
                 $conn = self::$primary_connection;
             }catch (Exception $e){
                 Tools::log($e->getMessage(),"connection",true);
