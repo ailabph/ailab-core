@@ -4,6 +4,9 @@ core framework classes
 ---
 ## Changelog
 
+v.0.50.18
+  - fix list not using extended class
+
 v.0.50.17
   - implement core module for codes
   - implement core module for package_header
