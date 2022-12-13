@@ -10,15 +10,15 @@ class Patcher implements Loggable
     public static string $patch_record_json_file = "patch_record.json";
 
     public static function runPatch(bool $regenerate_classes = false){
-        self::runSiteLevelPatch();
-        self::runCorePatches();
+        $site_patch_executed = self::runSiteLevelPatch();
+        $core_patch_executed = self::runCorePatches();
 
         // if local, generate classes
         if(!$regenerate_classes){
             self::addLog("skipping generation of db classes",__LINE__);
             return;
         }
-        if(Config::getEnv() == Config::ENV["local"]){
+        if(Config::getEnv() == Config::ENV["local"] && ($site_patch_executed > 0 || $core_patch_executed > 0)){
             self::addLog("local env detected, generating db class php",__LINE__);
             GeneratorClassPhp::run();
         }
@@ -27,7 +27,8 @@ class Patcher implements Loggable
         }
     }
 
-    public static function runSiteLevelPatch(){
+    public static function runSiteLevelPatch():int{
+        $patch_executed = 0;
         $patch_record = self::getPatchJsonFile();
         $patch_dir = self::getPatchDirectory(of_core_module: false);
 
@@ -67,9 +68,11 @@ class Patcher implements Loggable
 
         self::addLog("updating patch json file",__LINE__);
         self::updatePatchJsonFile($patch_record);
+        return $patch_executed;
     }
 
-    static function runCorePatches(){
+    static function runCorePatches():int{
+        $patch_executed = 0;
         self::addLog("running core patches",__LINE__);
         $patch_record = self::getPatchJsonFile();
         $patch_dir = self::getPatchDirectory(of_core_module: true);
@@ -109,6 +112,7 @@ class Patcher implements Loggable
         }
 
         self::updatePatchJsonFile($patch_record);
+        return $patch_executed;
     }
 
     private static function getPatchDirectory(bool $of_core_module = false): string{
