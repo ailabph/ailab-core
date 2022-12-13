@@ -28,6 +28,7 @@ class GeneratorExtractTablesData
                 self::setDefaultValues($property);
             }
             $tableDataHeader->data_propertiesString = Tools::convertArrayOfStringToString($tableDataHeader->data_properties,",","'");
+            $tableDataHeader->data_property_typesString = Tools::convertArrayOfStringToString($tableDataHeader->data_property_types,",","'",true);
             $tableDataHeader->dataKeysString = Tools::convertArrayOfStringToString($tableDataHeader->dataKeys,",","'");
             $tableDataHeader->dataKeysPrimaryString = Tools::convertArrayOfStringToString($tableDataHeader->dataKeysPrimary,",","'");
             $tableDataHeader->dataKeysUniqueString = Tools::convertArrayOfStringToString($tableDataHeader->dataKeysUnique,",","'");
@@ -70,24 +71,8 @@ class GeneratorExtractTablesData
         }
     }
     private static function setObjectType(TableDataProperty $property){
-        if(
-            str_contains($property->type,"char")
-            || str_contains($property->type,"text")
-            || str_contains($property->type,"date")
-        ){
-            $property->object_types = "string";
-        }
-        else if(
-            str_contains($property->type,"int")
-        ){
-            $property->object_types = "int";
-        }
-        else if(
-            str_contains($property->type,"decimal")
-        ){
-            $property->object_types = "float";
-        }
-        if(empty($property->object_types)) Assert::throw("object type not detected");
+        $php_type = Tools::getPhpTypeFromSqlType($property->type);
+        $property->object_types = $php_type;
         if($property->null == "YES" || $property->extra == "auto_increment"){
             $property->object_types .= "|null";
         }
@@ -98,13 +83,12 @@ class GeneratorExtractTablesData
         }
         else{
             if($property->object_types == "int" || $property->object_types == "float"){
-                $property->default_value = empty($property->default) ? 0 : $property->default;
+                $property->default_value = empty($property->default) ? -999 : $property->default;
             }
             else if($property->object_types == "string"){
-                $property->default_value = empty($property->default) ? "''" : "'$property->default'";
+                $property->default_value = empty($property->default) ? "'".TableClass::UNDEFINED_STRING."'" : "'$property->default'";
             }
         }
-
     }
 
     /** @return TableDataHeader[] */
