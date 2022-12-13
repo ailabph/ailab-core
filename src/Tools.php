@@ -57,6 +57,12 @@ class Tools
     #region LOGGERS
     private static string $lastLogDate = "";
 
+    public static function logPure(string $log, string $file_name = "logs.log"){
+        $log_directory = Config::getBaseDirectory()."/logs";
+        $full_path = $log_directory . "/" . $file_name;
+        file_put_contents($full_path, $log.PHP_EOL, FILE_APPEND);
+    }
+
     /**
      * @throws Exception
      */
@@ -64,8 +70,7 @@ class Tools
         if(Config::getConfig()->verbose_log || $force_write){
             Assert::isNotEmpty($message,"log message");
 
-            $log_directory = Config::getBaseDirectory() . "/logs";
-            $file_name = $log_directory . "/log_";
+            $file_name = "log_";
             if(!empty($category)){
                 $file_name .= $category ."_";
             }
@@ -104,6 +109,7 @@ class Tools
         }
     }
 
+
     /**
      * @throws Exception
      */
@@ -134,16 +140,27 @@ class Tools
 
     #region DATA PROCESS
 
-    public static function convertArrayOfStringToString(array $array, string $separator, string $data_wrapper = ""): string{
+    public static function convertArrayOfStringToString(array $array, string $separator, string $data_wrapper = "", bool $preserve_keys = false): string{
         Assert::isNotEmpty($separator,"array separator");
-        $new_data = [];
-        foreach ($array as $item=>$value){
-            if(!empty($data_wrapper)){
-                $value = $data_wrapper . $value . $data_wrapper;
+        $to_return = "";
+
+        if($preserve_keys){
+            foreach ($array as $property=>$value){
+                if(!empty($to_return)) $to_return .= ", ";
+                $to_return .= " ".$data_wrapper.$property.$data_wrapper." => ".$data_wrapper.$value.$data_wrapper;
             }
-            $new_data[] = $value;
         }
-        return implode($separator,$new_data);
+        else{
+            $new_data = [];
+            foreach ($array as $property=>$value){
+                if(!empty($data_wrapper)){
+                    $value = $data_wrapper . $value . $data_wrapper;
+                }
+                $new_data[] = $value;
+            }
+            $to_return = implode($separator,$new_data);
+        }
+        return $to_return;
     }
 
     #endregion END OF DATA PROCESS
@@ -249,7 +266,66 @@ class Tools
         return $param;
     }
 
+    const STRING = "string";
+    const FLOAT = "float";
+    const INT = "int";
+    const BOOLEAN = "boolean";
 
+    public static function getPhpTypeFromSqlType(string $sql_type): string{
+        Assert::isNotEmpty($sql_type,"sql_type");
+        $sql_type_parts = explode("(",$sql_type);
+        $base_sql_type = strtolower( $sql_type_parts[0] );
 
+        $php_type = "";
+
+        $int_types = [
+            "tinyint",
+            "smallint",
+            "mediumint",
+            "int",
+            "bigint",
+            "bit",
+            "serial",
+            "timestamp",
+        ];
+        if(in_array($base_sql_type,$int_types)) $php_type = self::INT;
+
+        if($base_sql_type == "boolean") $php_type = self::BOOLEAN;
+
+        $float_types = [
+            "decimal",
+            "float",
+            "double",
+            "real"
+        ];
+        if(in_array($base_sql_type,$float_types)) $php_type = self::FLOAT;
+
+        $string_types = [
+            "date",
+            "datetime",
+            "time",
+            "year",
+            "char",
+            "varchar",
+            "tinytext",
+            "text",
+            "mediumtext",
+            "longtext",
+            "binary",
+            "varbinary",
+            "tinyblob",
+            "blob",
+            "mediumblob",
+            "longblob",
+            "json",
+        ];
+        if(in_array($base_sql_type,$string_types)) $php_type = self::STRING;
+
+        if(empty($php_type)){
+            Assert::throw("sql type $base_sql_type not yet assigned to a php type");
+        }
+
+        return $php_type;
+    }
 
 }
