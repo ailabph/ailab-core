@@ -140,6 +140,6 @@ class Patcher implements Loggable
 
     static function addLog(string|array|object $log, int $line)
     {
-        Logger::add(msg:$log,category: "patch",line:$line);
+        Logger::add(msg:$log,category: "patch",line:$line,always_write: true);
     }
 }
