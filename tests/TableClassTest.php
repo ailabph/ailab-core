@@ -89,17 +89,27 @@ class TableClassTest extends TestCase
     }
 
     public function testList(){
-        $meta = new DB\meta_options();
-        $meta->tag = "new_tag_123";
-        $meta->value = "value_123";
-        $meta->save();
+        $meta1 = new DB\meta_options();
+        $meta1->tag = "new_tag_123";
+        $meta1->value = "value_123";
+        $meta1->save();
+
+        $meta2 = new DB\meta_options();
+        $meta2->tag = "new_tag_456";
+        $meta2->value = "value_456";
+        $meta2->save();
+
+        $meta3 = new DB\meta_options();
+        $meta3->tag = "new_tag_789";
+        $meta3->value = "value_789";
+        $meta3->save();
 
         $list = new DB\meta_optionsList(where:" WHERE 1 ",param:[],order:" ORDER BY id DESC LIMIT 3 ");
         self::assertCount(3,$list);
 
         $item = $list->fetch();
-        self::assertEquals("new_tag_123",$item->tag,"tag");
-        self::assertEquals($meta->id,$item->id,"tag");
+        self::assertEquals("new_tag_789",$item->tag,"tag");
+        self::assertEquals($meta3->id,$item->id,"tag");
 
         $list->rewind();
 
@@ -126,6 +136,8 @@ class TableClassTest extends TestCase
         $user1->firstname = "john";
         $user1->lastname = "doe";
         $user1->username = "johndoe";
+        $user1->password = "abc123";
+        $user1->usergroup = "admin";
         $user1->save();
 
         $meta = new DB\meta_options();
