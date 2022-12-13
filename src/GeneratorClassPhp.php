@@ -10,7 +10,8 @@ class GeneratorClassPhp
 {
     private static \PDO $connection;
 
-    public static function run(){
+    public static function run()
+    {
         $tables = GeneratorExtractTablesData::getTablesInfo();
         $loader = new FilesystemLoader(__DIR__."/../tpl");
         $twig = new Environment($loader);
@@ -26,7 +27,8 @@ class GeneratorClassPhp
         }
     }
 
-    private static function writeClass(string $classFile, string $table_name){
+    private static function writeClass(string $classFile, string $table_name): void
+    {
         try{
             $file_location = Config::getBaseDirectory() . "/App/DBClassGenerator/DB/".$table_name.".php";
             $fh = fopen($file_location,"w");
@@ -34,7 +36,8 @@ class GeneratorClassPhp
             if(!file_exists( $file_location)){
                 Assert::throw("class file not found");
             }
-            return fclose($fh);
+            fclose($fh);
+            return;
         }catch(\Exception $e){
             Assert::throw($e->getMessage());
         }
