@@ -10,6 +10,7 @@ use PDO;
 abstract class TableClass implements TableClassI
 {
     const UNDEFINED_STRING = "ailab_core_undefined";
+    const UNDEFINED_NUMBER = -987654321;
 
     private bool $isNew = true;
     protected string $table_name = "";
@@ -149,6 +150,9 @@ abstract class TableClass implements TableClassI
         if(empty($where)){
             foreach ($this->data_properties as $property){
                 if(!empty($this->{$property})){
+                    if($this->{$property} == self::UNDEFINED_NUMBER || $this->{$property} == self::UNDEFINED_STRING){
+                        continue;
+                    }
                     if(empty($where)){
                         $where .= " WHERE \n ";
                     }
