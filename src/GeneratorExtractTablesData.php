@@ -83,10 +83,10 @@ class GeneratorExtractTablesData
         }
         else{
             if($property->object_types == "int" || $property->object_types == "float"){
-                $property->default_value = empty($property->default) ? -999 : $property->default;
+                $property->default_value = is_null($property->default) ? TableClass::UNDEFINED_NUMBER : $property->default;
             }
             else if($property->object_types == "string"){
-                $property->default_value = empty($property->default) ? "'".TableClass::UNDEFINED_STRING."'" : "'$property->default'";
+                $property->default_value = is_null($property->default) ? "'".TableClass::UNDEFINED_STRING."'" : "'$property->default'";
             }
         }
     }
@@ -114,12 +114,12 @@ class GeneratorExtractTablesData
         $dataHeader->properties = [];
         foreach ($properties as $property){
             $propertyData = new TableDataProperty();
-            $propertyData->field = $property["Field"] ?? "";
-            $propertyData->type = $property["Type"] ?? "";
-            $propertyData->null = $property["Null"] ?? "";
-            $propertyData->key = $property["Key"] ?? "";
-            $propertyData->default = $property["Default"] ?? "";
-            $propertyData->extra = $property["Extra"] ?? "";
+            $propertyData->field = $property["Field"];
+            $propertyData->type = $property["Type"];
+            $propertyData->null = $property["Null"];
+            $propertyData->key = $property["Key"];
+            $propertyData->default = $property["Default"];
+            $propertyData->extra = $property["Extra"];
             $dataHeader->properties[] = $propertyData;
         }
         return $dataHeader;
