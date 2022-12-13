@@ -44,14 +44,204 @@ class Tools
             return $_SERVER['REMOTE_ADDR'] ?? "";
         }
     }
-    #endregion
+
+    const STRING = "string";
+    const FLOAT = "float";
+    const INT = "int";
+    const BOOLEAN = "boolean";
+
+    public static function getPhpTypeFromSqlType(string $sql_type): string{
+        Assert::isNotEmpty($sql_type,"sql_type");
+        $sql_type_parts = explode("(",$sql_type);
+        $base_sql_type = strtolower( $sql_type_parts[0] );
+
+        $php_type = "";
+
+        $int_types = [
+            "tinyint",
+            "smallint",
+            "mediumint",
+            "int",
+            "bigint",
+            "bit",
+            "serial",
+            "timestamp",
+        ];
+        if(in_array($base_sql_type,$int_types)) $php_type = self::INT;
+
+        if($base_sql_type == "boolean") $php_type = self::BOOLEAN;
+
+        $float_types = [
+            "decimal",
+            "float",
+            "double",
+            "real"
+        ];
+        if(in_array($base_sql_type,$float_types)) $php_type = self::FLOAT;
+
+        $string_types = [
+            "date",
+            "datetime",
+            "time",
+            "year",
+            "char",
+            "varchar",
+            "tinytext",
+            "text",
+            "mediumtext",
+            "longtext",
+            "binary",
+            "varbinary",
+            "tinyblob",
+            "blob",
+            "mediumblob",
+            "longblob",
+            "json",
+        ];
+        if(in_array($base_sql_type,$string_types)) $php_type = self::STRING;
+
+        if(empty($php_type)){
+            Assert::throw("sql type $base_sql_type not yet assigned to a php type");
+        }
+
+        return $php_type;
+    }
+
+    /**
+     * @throws Exception
+     */
+    static public function getValueFromArray(string $property, array $source, bool $strict = false, string $error_tag = ""){
+        if(isset($source[$property])){
+            return $source[$property];
+        }
+        if($strict){
+            Assert::throw("property:$property not found","",$error_tag);
+        }
+        return null;
+    }
+
+    static public function getDefaultPageParam(): array{
+        $param["MAINTENANCE_MODE"] = Config::getConfig()->maintenance_mode;
+        $param["maintenance_mode"] = Config::getConfig()->maintenance_mode;
+
+        $param["MAINTENANCE_MESSAGE"] = Config::getConfig()->maintenance_mode_message;
+        $param["maintenance_message"] = Config::getConfig()->maintenance_mode_message;
+
+        $param["user"] = Tools::isLoggedIn() ? Tools::getCurrentUser() : null;
+
+        $param["ROOTDIRECTORY"] = Config::getBaseDirectory();
+        $param["base_dir"] = Config::getBaseDirectory();
+
+        $param["module_dir"] = Config::getBaseDirectory(of_core_module: true);
+
+        if(self::isInModule()){
+            $param["core_script_url"] = Config::getConfig()->site_url . "/vendor/ailabph/ailab-core/core_scripts";
+        }
+        else{
+            $param["core_script_url"] = Config::getConfig()->site_url . "/core_scripts";
+        }
+
+        $param["page"] = Render::getPage();
+        $param["page_details"] = Render::getPageDetails();
+        $param["page_description"] = Render::getPageDescription();
+
+        $param["SITE_NAME"] = Config::getPublicConfig()->site_name;
+        $param["site_name"] = Config::getPublicConfig()->site_name;
+
+        $param["SENDERNAME"] = Config::getPublicConfig()->site_shortcode;
+
+        $param["URL"] = Config::getConfig()->site_url;
+        $param["APP_URL"] = config::getConfig()->site_url;
+        $param["url"] = Config::getConfig()->site_url;
+
+        $param["SITE_URL"] = Config::getConfig()->site_front_url;
+        $param["SITE_URL_SHORT"] = Config::getConfig()->site_front_url;
+        $param["site_url"] = Config::getConfig()->site_front_url;
+
+
+        $param["APP_URL_SHORT"] = Config::getConfig()->site_domain;
+        $param["site_domain"] = Config::getConfig()->site_domain;
+
+        $param["THEME_URL"] = Config::getPublicConfig()->theme_url;
+        $param["theme_url"] = Config::getPublicConfig()->theme_url;
+
+        $param["SITE_PREFIX"] = Config::getPublicConfig()->site_prefix;
+        $param["site_prefix"] = Config::getPublicConfig()->site_prefix;
+
+        $param["ENABLE_OTP"] = Config::getConfig()->enable_otp;
+        $param["enable_otp"] = Config::getConfig()->enable_otp;
+
+        $param["LOGIN_BG"] = Config::getPublicConfig()->login_bg;
+        $param["login_bg"] = Config::getPublicConfig()->login_bg;
+
+        $param["LOGIN_LOGO"] = Config::getPublicConfig()->logo_login;
+        $param["logo_login"] = Config::getPublicConfig()->logo_login;
+
+        $param["LOGO"] = Config::getPublicConfig()->logo_wide;
+        $param["logo_box"] = Config::getPublicConfig()->logo_box;
+        $param["logo_wide"] = Config::getPublicConfig()->logo_wide;
+
+        $param["STRUCTURE_BG"] = Config::getPublicConfig()->structure_bg;
+        $param["structure_bg"] = Config::getPublicConfig()->structure_bg;
+
+        $param["LOGIN_BG"] = Config::getPublicConfig()->login_bg;
+        $param["login_bg"] = Config::getPublicConfig()->login_bg;
+
+        return $param;
+    }
+
+    public static function getAppClassNamespace(string $class): string
+    {
+        if(str_contains($class,TableClass::BASE_NAME_SPACE)) return $class;
+        return TableClass::BASE_NAME_SPACE."\\".$class;
+    }
+
+    #endregion END GETTERS
 
 
     #region CHECKERS
+
     static public function isLoggedIn(): bool{
-        return isset($GLOBALS["user"]) && $GLOBALS["user"] instanceof DB\userX;
+        return isset($GLOBALS["user"]) && $GLOBALS["user"] instanceof DB\user;
     }
-    #endregion
+
+    static public function isInModule(): bool{
+        return str_contains(__DIR__,"/vendor/");
+    }
+
+    static public function isActiveMember(): bool{
+        if(!self::isLoggedIn()) return false;
+        return Tools::getCurrentUser()->usergroup != "new";
+    }
+
+    static public function isStaff(): bool{
+        if(!self::isLoggedIn()) return false;
+        return in_array(Tools::getCurrentUser()->usergroup,["admin","owner","staff","approver","reviewer"]);
+    }
+
+    static public function isCenter(): bool{
+        if(!self::isLoggedIn()) return false;
+        return in_array(Tools::getCurrentUser()->usergroup,["mobile_stockist","municipal","provincial","regional","country"]);
+    }
+
+    public static function checkPropertiesExistInClass(string $class, array $properties) : bool
+    {
+        if(!class_exists($class)) Assert::throw("class: $class does not exist");
+        foreach ($properties as $property) {
+            if(!property_exists($class,$property)){
+                Assert::throw("property:$property does not exist in $class");
+            }
+        }
+        return true;
+    }
+
+    public static function appClassExist(string $class): string{
+        $class = self::getAppClassNamespace($class);
+        if(!class_exists($class)) Assert::throw("class:$class does not exist");
+        return $class;
+    }
+
+    #endregion END CHECKERS
 
 
     #region LOGGERS
@@ -162,169 +352,37 @@ class Tools
         return $to_return;
     }
 
+    static public function importValuesToObject(
+        array|object $from_data,
+        object       &$to_object,
+        string       $prefix = "",
+        bool         $strict = false,
+    ){
+        foreach ($to_object as $property => $value){
+            if(is_array($from_data)){
+                $extracted_value = self::getValueFromArray($property,$from_data,$strict);
+            }
+            else{
+                if($strict){
+                    if(!property_exists($from_data,$property)){
+                        Assert::throw("property$property does not exist on source data object");
+                    }
+                }
+                $extracted_value = $from_data->{$property};
+            }
+            $property_with_prefix = $prefix . $property;
+            if(!property_exists($to_object,$property_with_prefix)){
+                Assert::throw("unable to copy value to property:$property_with_prefix. property does not exist");
+            }
+            $to_object->{$property_with_prefix} = is_null($extracted_value) && isset($value) ? $value : $extracted_value;
+        }
+    }
+
     #endregion END OF DATA PROCESS
 
 
     #region TEMPLATES
     #endregion
 
-    /**
-     * @throws Exception
-     */
-    static public function getValueFromArray(string $property, array $source, bool $strict = false, string $error_tag = ""){
-        if(isset($source[$property])){
-            return $source[$property];
-        }
-        if($strict){
-            Assert::throw("property:$property not found","",$error_tag);
-        }
-        return null;
-    }
-
-    /**
-     * @throws Exception
-     */
-    static public function importValuesFromArrayToObject(array $from_array, object &$to_object, bool $strict = false, string $error_tag = ""){
-        foreach ($to_object as $property => $value){
-            $extracted_value = self::getValueFromArray($property,$from_array,$strict,$error_tag);
-            $to_object->{$property} = is_null($extracted_value) && isset($value) ? $value : $extracted_value;
-        }
-    }
-
-    static public function isInModule(): bool{
-        return str_contains(__DIR__,"/vendor/");
-    }
-
-    static public function getDefaultPageParam(): array{
-        $param["MAINTENANCE_MODE"] = Config::getConfig()->maintenance_mode;
-        $param["maintenance_mode"] = Config::getConfig()->maintenance_mode;
-
-        $param["MAINTENANCE_MESSAGE"] = Config::getConfig()->maintenance_mode_message;
-        $param["maintenance_message"] = Config::getConfig()->maintenance_mode_message;
-
-        $param["user"] = Tools::isLoggedIn() ? Tools::getCurrentUser() : null;
-
-        $param["ROOTDIRECTORY"] = Config::getBaseDirectory();
-        $param["base_dir"] = Config::getBaseDirectory();
-
-        $param["module_dir"] = Config::getBaseDirectory(of_core_module: true);
-
-        if(self::isInModule()){
-            $param["core_script_url"] = Config::getConfig()->site_url . "/vendor/ailabph/ailab-core/core_scripts";
-        }
-        else{
-            $param["core_script_url"] = Config::getConfig()->site_url . "/core_scripts";
-        }
-
-        $param["page"] = Render::getPage();
-        $param["page_details"] = Render::getPageDetails();
-        $param["page_description"] = Render::getPageDescription();
-
-        $param["SITE_NAME"] = Config::getPublicConfig()->site_name;
-        $param["site_name"] = Config::getPublicConfig()->site_name;
-
-        $param["SENDERNAME"] = Config::getPublicConfig()->site_shortcode;
-
-        $param["URL"] = Config::getConfig()->site_url;
-        $param["APP_URL"] = config::getConfig()->site_url;
-        $param["url"] = Config::getConfig()->site_url;
-
-        $param["SITE_URL"] = Config::getConfig()->site_front_url;
-        $param["SITE_URL_SHORT"] = Config::getConfig()->site_front_url;
-        $param["site_url"] = Config::getConfig()->site_front_url;
-
-
-        $param["APP_URL_SHORT"] = Config::getConfig()->site_domain;
-        $param["site_domain"] = Config::getConfig()->site_domain;
-
-        $param["THEME_URL"] = Config::getPublicConfig()->theme_url;
-        $param["theme_url"] = Config::getPublicConfig()->theme_url;
-
-        $param["SITE_PREFIX"] = Config::getPublicConfig()->site_prefix;
-        $param["site_prefix"] = Config::getPublicConfig()->site_prefix;
-
-        $param["ENABLE_OTP"] = Config::getConfig()->enable_otp;
-        $param["enable_otp"] = Config::getConfig()->enable_otp;
-
-        $param["LOGIN_BG"] = Config::getPublicConfig()->login_bg;
-        $param["login_bg"] = Config::getPublicConfig()->login_bg;
-
-        $param["LOGIN_LOGO"] = Config::getPublicConfig()->logo_login;
-        $param["logo_login"] = Config::getPublicConfig()->logo_login;
-
-        $param["LOGO"] = Config::getPublicConfig()->logo_wide;
-        $param["logo_box"] = Config::getPublicConfig()->logo_box;
-        $param["logo_wide"] = Config::getPublicConfig()->logo_wide;
-
-        $param["STRUCTURE_BG"] = Config::getPublicConfig()->structure_bg;
-        $param["structure_bg"] = Config::getPublicConfig()->structure_bg;
-
-        $param["LOGIN_BG"] = Config::getPublicConfig()->login_bg;
-        $param["login_bg"] = Config::getPublicConfig()->login_bg;
-
-        return $param;
-    }
-
-    const STRING = "string";
-    const FLOAT = "float";
-    const INT = "int";
-    const BOOLEAN = "boolean";
-
-    public static function getPhpTypeFromSqlType(string $sql_type): string{
-        Assert::isNotEmpty($sql_type,"sql_type");
-        $sql_type_parts = explode("(",$sql_type);
-        $base_sql_type = strtolower( $sql_type_parts[0] );
-
-        $php_type = "";
-
-        $int_types = [
-            "tinyint",
-            "smallint",
-            "mediumint",
-            "int",
-            "bigint",
-            "bit",
-            "serial",
-            "timestamp",
-        ];
-        if(in_array($base_sql_type,$int_types)) $php_type = self::INT;
-
-        if($base_sql_type == "boolean") $php_type = self::BOOLEAN;
-
-        $float_types = [
-            "decimal",
-            "float",
-            "double",
-            "real"
-        ];
-        if(in_array($base_sql_type,$float_types)) $php_type = self::FLOAT;
-
-        $string_types = [
-            "date",
-            "datetime",
-            "time",
-            "year",
-            "char",
-            "varchar",
-            "tinytext",
-            "text",
-            "mediumtext",
-            "longtext",
-            "binary",
-            "varbinary",
-            "tinyblob",
-            "blob",
-            "mediumblob",
-            "longblob",
-            "json",
-        ];
-        if(in_array($base_sql_type,$string_types)) $php_type = self::STRING;
-
-        if(empty($php_type)){
-            Assert::throw("sql type $base_sql_type not yet assigned to a php type");
-        }
-
-        return $php_type;
-    }
 
 }
