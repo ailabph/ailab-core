@@ -3,6 +3,10 @@ use Ailabph\AilabCore\TableClass;
 
 class {{ table.table_name }} extends TableClass
 {
+{% for property in table.properties %}
+    const PROP_{{ property.field|upper }} = "{{ property.field|raw }}";
+{% endfor %}
+
     const table_name = "{{ table.table_name }}";
     protected string $table_name = self::table_name;
 
@@ -34,7 +38,13 @@ class {{ table.table_name }} extends TableClass
 
 {% for property in table.properties %}
     public {{ property.object_types|raw }} ${{ property.field|raw }} = {{ property.default_value|raw }};
+{% endfor %}
+
+{% for property in table.properties %}
     protected {{ property.object_types|raw }} ${{ property.field|raw }}_orig = {{ property.default_value|raw }};
+{% endfor %}
+
+{% for property in table.properties %}
     protected {{ property.object_types|raw }} ${{ property.field|raw }}_default = {{ property.default_value|raw }};
 {% endfor %}
 
