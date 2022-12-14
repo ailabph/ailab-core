@@ -7,7 +7,7 @@ use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\Pure;
 use PDO;
 
-abstract class TableClass implements TableClassI
+abstract class TableClass implements TableClassI, Loggable
 {
     const UNDEFINED_STRING = "ailab_core_undefined";
     const UNDEFINED_NUMBER = -987654321;
@@ -37,15 +37,20 @@ abstract class TableClass implements TableClassI
 
     #region GETTERS
 
+    public function getValue(string $property){
+        $this->propertyExists($property);
+        return $this->{$property};
+    }
+
     public function getOrig(string $property){
-        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
+        $this->propertyExists($property);
         $property_orig = $property . "_orig";
         if(!property_exists($this,$property_orig)) Assert::throw("property:$property_orig does not exist");
         return $this->{$property_orig};
     }
 
     public function getDefault(string $property){
-        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
+        $this->propertyExists($property);
         $property_default = $property . "_default";
         if(!property_exists($this,$property_default)) Assert::throw("property:$property_default does not exist");
         return $this->{$property_default};
@@ -63,7 +68,6 @@ abstract class TableClass implements TableClassI
     }
 
     #endregion
-
 
 
     #region CHECKERS
@@ -84,9 +88,16 @@ abstract class TableClass implements TableClassI
     }
 
     public function hasChange(string $property): bool{
-        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist in this table");
-        if(!property_exists($this,$property."_orig")) Assert::throw("original property:$property does not exist");
-        return $this->{$property} != $this->{$property."_orig"};
+        $default_value = $this->getDefault($property);
+        $original_value = $this->getOrig($property);
+        $current_value = $this->getValue($property);
+
+        if($this->isNew()){
+            return $default_value !== $current_value;
+        }
+        else{
+            return $original_value !== $current_value;
+        }
     }
 
     public function hasAnyChanges():bool{
@@ -101,8 +112,18 @@ abstract class TableClass implements TableClassI
     }
 
     public function hasValue(string $property): bool{
-        if(!in_array($property,$this->data_properties)) Assert::throw("property:$property does not exist");
-        return !is_null($this->{$property});
+        self::propertyExists($property);
+        if($this->hasPlaceholderValue($property)){
+            return false;
+        }
+        if($this->isNew()){
+            $default_value = $this->getDefault($property);
+            $current_value = $this->getValue($property);
+            return $default_value != $current_value;
+        }
+        else{
+            return $this->hasChange($property);
+        }
     }
 
     public function hasAnyValue():bool{
@@ -116,14 +137,18 @@ abstract class TableClass implements TableClassI
         return $hasValue;
     }
 
-    #endregion END CHECKERS
+    public function hasPlaceholderValue(string $property):bool{
+        $value = $this->getValue($property);
+        return $value == self::UNDEFINED_STRING || $value == self::UNDEFINED_NUMBER;
+    }
 
+    #endregion END CHECKERS
 
 
     #region QUERY ACTIONS
 
     #[ArrayShape(["where" => "string", "param" => "array"])]
-    private function buildWhereParamForQuery(bool $throwIfNoKeys = true):array{
+    private function buildWhereParamForQuery(bool $throwIfNoKeys = true, string $property_divider = "\n\t "):array{
         $where = "";
         $param = [];
         foreach ($this->dataKeysPrimary as $key){
@@ -137,7 +162,7 @@ abstract class TableClass implements TableClassI
         if(empty($where)){
             foreach ($this->dataKeysUnique as $key){
                 if(!empty($this->{$key})){
-                    $where .= " WHERE \n\t ".$this->wrapPropertyForQuery($key)." = :$key ";
+                    $where .= " WHERE $property_divider".$this->wrapPropertyForQuery($key)."=:$key ";
                     $param[":$key"] = $this->{$key};
                     break;
                 }
@@ -155,12 +180,12 @@ abstract class TableClass implements TableClassI
                         continue;
                     }
                     if(empty($where)){
-                        $where .= " WHERE \n ";
+                        $where .= " WHERE ";
                     }
                     else{
-                        $where .= " AND \n ";
+                        $where .= " AND ";
                     }
-                    $where .="\t". $this->wrapPropertyForQuery($property)." = :$property ";
+                    $where .="$property_divider". $this->wrapPropertyForQuery($property)." = :$property ";
                     $param[":$property"] = $this->{$property};
                 }
             }
@@ -180,21 +205,15 @@ abstract class TableClass implements TableClassI
 
     private function getRecord(string $where = "", array $param = [], bool $getAll = false, string $order = "", string $select = " * ", string $join = ""): array|object|false{
         if(empty($where)){
-            $whereParam = $this->buildWhereParamForQuery(throwIfNoKeys: false);
+            $whereParam = $this->buildWhereParamForQuery(throwIfNoKeys: false,property_divider: "");
             $where = $whereParam["where"];
             $param = $whereParam["param"];
         }
 
-        $sql =
-            "SELECT \n "
-            ."\t ".$select."\n "
-            ." FROM \n "
-            ."\t ". $this->getTableName(true)." \n "
-            ." ".$join." \n "
-            ." ".$where." \n "
-            ." ".$order;
-        Tools::log($sql,"query");
-        Tools::log(print_r($param,true),"query");
+        $sql =  "SELECT ".$select." FROM ".$this->getTableName(true)." ";
+        $sql .= $join." ".$where." ".$order;
+
+        self::addLog($this->formatQueryString($sql,$param),__LINE__);
         $statement = $this->pdoConnection->prepare($sql);
 
         try{
@@ -227,20 +246,21 @@ abstract class TableClass implements TableClassI
     }
 
     public function save(string $where = "", array $param = []){
-        Tools::log("saving ".$this->getTableName(),"query");
+        self::addLog("saving ".$this->getTableName(),__LINE__);
         if(!$this->hasAnyChanges()) return;
         self::checkRequiredValues();
         if($this->isNew()){
-            Tools::log("new record, inserting...","query");
+            self::addLog("new record, inserting...",__LINE__);
             $this->insert();
         }
         else{
-            Tools::log("existing record, updating...","query");
+            self::addLog("existing record, updating...",__LINE__);
             $this->update($where,$param);
         }
     }
 
     private function update(string $where = "", array $param = []){
+        self::addLog("updating ".$this->getTableName(),__LINE__);
         if(!$this->hasAnyChanges()) {
             $error_message = "nothing to update, property has no changes";
             Tools::logIncident(message:$error_message, category: "query",printLoggedDevice: true, printStackTrace: false);
@@ -259,7 +279,7 @@ abstract class TableClass implements TableClassI
         foreach($this->data_properties as $property){
             if(in_array($property,$this->dataKeysPrimary)) continue;
             if($this->hasChange($property)){
-                if(!empty($insertSection)) $insertSection .= ", \n\t\t ";
+                if(!empty($insertSection)) $insertSection .= ", \n\t ";
                 $insertSection .= $this->wrapPropertyForQuery($property) . " = :$property ";
                 $param[":$property"] = $this->{$property};
             }
@@ -272,13 +292,12 @@ abstract class TableClass implements TableClassI
             Assert::throw($error_message);
         }
 
-        $sql =  "UPDATE \n";
-        $sql .= " \t ".$this->getTableName(forQuery: true)." \n ";
-        $sql .= "SET \n ";
-        $sql .= " \t\t ".$insertSection." \n ";
-        $sql .= $where;
-        Tools::log($sql,"query");
-        Tools::log(print_r($param,true),"query");
+        $sql =  "UPDATE ";
+        $sql .= "\n\t ".$this->getTableName(forQuery: true)." ";
+        $sql .= "\nSET";
+        $sql .= "\n\t ".$insertSection." ";
+        $sql .= "\n".$where;
+        self::addLog(PHP_EOL.$this->formatQueryString($sql,$param),__LINE__);
 
         $statement = $this->pdoConnection->prepare($sql);
         try{
@@ -295,11 +314,12 @@ abstract class TableClass implements TableClassI
 //            Tools::logIncident(message:PHP_EOL.print_r($param,true),category:"query",printLoggedDevice: false, printStackTrace: true);
 //            Assert::throw("Something went wrong when updating a record");
 //        }
-        $this->resetOriginalValues();
+        $this->importOriginalValuesFromCurrentValues();
 
     }
 
     private function insert(){
+        self::addLog("inserting into ".$this->getTableName(),__LINE__);
         if(!$this->hasAnyValue()) Assert::throw("Nothing to insert");
         $insertProperties = "";
         $insertValues = "";
@@ -312,8 +332,8 @@ abstract class TableClass implements TableClassI
                     $insertProperties .= ", ";
                     $insertValues .= ", ";
                 }
-                $insertProperties .= " \n\t\t ";
-                $insertValues .= " \n\t\t ";
+                $insertProperties .= "\n\t ";
+                $insertValues .= "\n\t ";
 
                 $insertProperties .= $this->wrapPropertyForQuery($property);
                 $insertValues .= ":$property";
@@ -334,8 +354,7 @@ abstract class TableClass implements TableClassI
             Assert::throw("Unable to build an insert query string");
         }
 
-        Tools::log("inserting query:$sql","query");
-        Tools::log(print_r($insertParam,true),"query");
+        self::addLog(PHP_EOL.$this->formatQueryString($sql,$insertParam),__LINE__);
         $statement = $this->pdoConnection->prepare($sql);
         try{
             $statement->execute($insertParam);
@@ -359,7 +378,7 @@ abstract class TableClass implements TableClassI
             $this->{$this->dataKeysPrimary[0]} = $insertId;
         }
         $this->isNew = false;
-        $this->resetOriginalValues();
+        $this->importOriginalValuesFromCurrentValues();
     }
 
     public function delete(bool $softDelete = false){
@@ -369,8 +388,8 @@ abstract class TableClass implements TableClassI
         $sql .= " ".$this->getTableName(forQuery: true);
         $sql .= $whereParam["where"];
 
-        Tools::log($sql,"query");
-        Tools::log(print_r($whereParam["param"],true),"query");
+        self::addLog($sql,__LINE__);
+        self::addLog(print_r($whereParam["param"],true),__LINE__);
         $statement = $this->pdoConnection->prepare($sql);
         try{
             $statement->execute($whereParam["param"]);
@@ -391,11 +410,10 @@ abstract class TableClass implements TableClassI
 
         $this->isNew = true;
         $this->resetAllValues();
-        $this->resetOriginalValues();
     }
 
     public function refresh(){
-        Tools::log("refreshing data of ".$this->getTableName(),"query");
+        self::addLog("refreshing data of ".$this->getTableName(),__LINE__);
         if($this->isNew()) return;
         $this->getRecordAndLoadValues();
     }
@@ -404,8 +422,6 @@ abstract class TableClass implements TableClassI
 
 
     #region UTILITIES
-
-
 
     public function loadValues(array|object $data, bool $isNew = false, array $exclude = [], bool $manualLoad = false, bool $strict = false){
         $this->isNew = $isNew;
@@ -432,9 +448,9 @@ abstract class TableClass implements TableClassI
         return $this->getTableName(true).".`$prop`";
     }
 
-    private function resetOriginalValues(){
+    private function importOriginalValuesFromCurrentValues(){
         foreach ($this->data_properties as $property){
-            $this->{$property."_orig"} = $this->getOrig($property);
+            $this->{$property."_orig"} = $this->getValue($property);
         }
     }
 
@@ -459,6 +475,17 @@ abstract class TableClass implements TableClassI
                 }
             }
         }
+    }
+
+    protected function formatQueryString(string $query, array $param):string{
+        foreach ($param as $property => $value){
+            $query = str_replace($property,"$property -> $value",$query);
+        }
+        return $query;
+    }
+
+    public static function addLog(string $log, int $line){
+        Logger::add(msg:$log,category: "query",line:$line);
     }
 
     #endregion END OF UTILITIES
