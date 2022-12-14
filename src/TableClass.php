@@ -127,7 +127,7 @@ abstract class TableClass implements TableClassI
         $where = "";
         $param = [];
         foreach ($this->dataKeysPrimary as $key){
-            if(!empty($this->{$key})){
+            if(!empty($this->{$key}) && ($this->{$key} != self::UNDEFINED_NUMBER && $this->{$key} != self::UNDEFINED_STRING)){
                 $where .= " WHERE \n\t ".$this->wrapPropertyForQuery($key)." = :$key ";
                 $param[":$key"] = $this->{$key};
                 break;
@@ -227,12 +227,15 @@ abstract class TableClass implements TableClassI
     }
 
     public function save(string $where = "", array $param = []){
+        Tools::log("saving ".$this->getTableName(),"query");
         if(!$this->hasAnyChanges()) return;
         self::checkRequiredValues();
         if($this->isNew()){
+            Tools::log("new record, inserting...","query");
             $this->insert();
         }
         else{
+            Tools::log("existing record, updating...","query");
             $this->update($where,$param);
         }
     }
@@ -286,12 +289,12 @@ abstract class TableClass implements TableClassI
             Tools::logIncident(message:PHP_EOL.print_r($param,true),category:"query",printLoggedDevice: false, printStackTrace: true);
             Assert::throw("Something went wrong when updated a record");
         }
-        if($statement->rowCount() == 0){
-            Tools::logIncident(message:"No rows affected during update query",category:"query",printLoggedDevice: true, printStackTrace: false);
-            Tools::logIncident(message:PHP_EOL.$sql, category: "query",printLoggedDevice: false, printStackTrace: false);
-            Tools::logIncident(message:PHP_EOL.print_r($param,true),category:"query",printLoggedDevice: false, printStackTrace: true);
-            Assert::throw("Something went wrong when updating a record");
-        }
+//        if($statement->rowCount() == 0){
+//            Tools::logIncident(message:"No rows affected during update query",category:"query",printLoggedDevice: true, printStackTrace: false);
+//            Tools::logIncident(message:PHP_EOL.$sql, category: "query",printLoggedDevice: false, printStackTrace: false);
+//            Tools::logIncident(message:PHP_EOL.print_r($param,true),category:"query",printLoggedDevice: false, printStackTrace: true);
+//            Assert::throw("Something went wrong when updating a record");
+//        }
         $this->resetOriginalValues();
 
     }
@@ -331,6 +334,8 @@ abstract class TableClass implements TableClassI
             Assert::throw("Unable to build an insert query string");
         }
 
+        Tools::log("inserting query:$sql","query");
+        Tools::log(print_r($insertParam,true),"query");
         $statement = $this->pdoConnection->prepare($sql);
         try{
             $statement->execute($insertParam);
@@ -390,6 +395,7 @@ abstract class TableClass implements TableClassI
     }
 
     public function refresh(){
+        Tools::log("refreshing data of ".$this->getTableName(),"query");
         if($this->isNew()) return;
         $this->getRecordAndLoadValues();
     }
