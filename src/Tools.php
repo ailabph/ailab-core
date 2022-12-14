@@ -8,7 +8,7 @@ use App\DBClassGenerator\DB;
 
 class Tools
 {
-    const LINE_SEPARATOR = PHP_EOL."--------------------------------------------------------------------------".PHP_EOL;
+    const LINE_SEPARATOR = "--------------------------------------------------------------------------";
 
     #region GETTERS
     public static function getUserAgent(): string{
@@ -251,6 +251,9 @@ class Tools
         $log_directory = Config::getBaseDirectory()."/logs";
         $full_path = $log_directory . "/" . $file_name;
         file_put_contents($full_path, $log.PHP_EOL, FILE_APPEND);
+        if($file_name != "logs.log" && (Config::getEnv() == Config::ENV["test"] || Config::getEnv() == Config::ENV["local"])){
+            self::logPure($log);
+        }
     }
 
     /**
@@ -279,7 +282,6 @@ class Tools
             }
 
             $formatted_message .= $message;
-            $formatted_message .= PHP_EOL;
             self::logPure(log:$formatted_message,file_name: $file_name);
 
             if($print_trace){
