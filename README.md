@@ -4,6 +4,16 @@ core framework classes
 ---
 ## Changelog
 
+v.0.50.26
+  - minor 
+    - improve format in logger
+    - added property constants. improved template readability
+    - implement Logger on TableClass 
+    - fix bug in resetting original values after saving
+    - improve logic on hasValue and hasChange
+    - add hasPlaceholder method
+    - improve logging format
+
 v.0.50.19
   - fix list not using extended class
 
