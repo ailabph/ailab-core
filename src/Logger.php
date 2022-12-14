@@ -22,7 +22,10 @@ class Logger
         $file_source = str_replace(Config::getBaseDirectory(),"",$call_stack["file"]);
         $method = $call_stack["function"];
 
-        $build_log = "[$file_source:$line] $method -> $msg";
+        $file_source_parts = explode("/",$file_source);
+        $file_name = $file_source_parts[count($file_source_parts)-1];
+
+        $build_log = "[$file_name:$line|$method()] ".$msg;
 
         Tools::log(message:$build_log,category: $category,force_write: $always_write);
     }
