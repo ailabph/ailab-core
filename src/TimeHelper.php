@@ -23,6 +23,8 @@ class TimeHelper
     const FORMAT_DATE_TIME_DB = "Y-m-d H:i:s";
     const FORMAT_DATE_TIME_AMPM = "Y-m-d h:i A";
 
+    public static string|int $OVERRIDE_CURRENT_TIME = 0;
+
     /**
      * @throws Exception
      */
@@ -56,8 +58,13 @@ class TimeHelper
      * @throws Exception
      */
     static public function getCurrentTime(): Carbon{
-        $carbon = Carbon::now(self::getTimeZone());
-        $carbon->setTimezone(self::getTimeZone());
+        if(self::$OVERRIDE_CURRENT_TIME > 0){
+            $carbon = self::isValidDate(self::$OVERRIDE_CURRENT_TIME);
+        }
+        else{
+            $carbon = Carbon::now(self::getTimeZone());
+            $carbon->setTimezone(self::getTimeZone());
+        }
         return $carbon;
     }
 
