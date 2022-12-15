@@ -4,6 +4,16 @@ core framework classes
 ---
 ## Changelog
 
+v.0.52.4
+ - major
+   - add traverse sponsor and binary class
+   - user methods with hooks
+ - minor
+   - override current time
+   - get sponsor and binary upline methods
+   - add isCallable method
+   - patch sponsor_id and placement_id
+
 v.0.50.26
   - minor 
     - improve format in logger
