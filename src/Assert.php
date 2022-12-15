@@ -59,6 +59,16 @@ class Assert
         throw new Exception($formatted_msg);
     }
 
+    static public function isCallable(string $method, bool $throw = true): bool{
+        if(empty($method)) return false;
+        $is_callable = is_callable($method);
+        if($is_callable) return true;
+        if($throw){
+            Assert::throw("$method is not callable");
+        }
+        return false;
+    }
+
     //region CONNECTION RELATED
     public static function inTransaction()
     {
