@@ -235,8 +235,12 @@ class Tools
         return true;
     }
 
-    public static function appClassExist(string $class): string{
+    public static function appClassExist(string $class, bool $throw = true): string|false{
         $class = self::getAppClassNamespace($class);
+        if(!class_exists($class)){
+            if($throw) Assert::throw("class:$class does not exist");
+            return false;
+        }
         if(!class_exists($class)) Assert::throw("class:$class does not exist");
         return $class;
     }

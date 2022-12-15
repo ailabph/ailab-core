@@ -26,7 +26,7 @@ class {{ table.table_name }}List implements \Iterator,\Countable
         if($dataList){
             $extended_class = AilabCore\Tools::getAppClassNamespace($class);
             $class_to_use = AilabCore\Tools::getAppClassNamespace("{{ table.table_name }}");
-            if(AilabCore\Tools::appClassExist($extended_class)){
+            if(AilabCore\Tools::appClassExist($extended_class, ($class != "{{ table.table_name }}X"))){
                 $class_to_use = $extended_class;
             }
             foreach ($dataList as $data){
