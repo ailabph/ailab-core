@@ -4,6 +4,9 @@ core framework classes
 ---
 ## Changelog
 
+v.0.52.5
+ - fix bug that throws error if default X class does not exist
+
 v.0.52.4
  - major
    - add traverse sponsor and binary class
