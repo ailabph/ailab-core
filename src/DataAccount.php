@@ -34,4 +34,28 @@ class DataAccount
 
         return $to_return;
     }
+
+    public static function getSponsorUpline(DB\account|string|int $account): DB\accountX|false{
+        $account = self::get($account);
+        if(!empty($account->sponsor_account_id) && !($account->sponsor_id > 0)){
+            Assert::throw(
+                "account:".$account->account_code
+                ." has sponsor code info:".$account->sponsor_account_id
+                ." but has not sponsor_id");
+        }
+        if(empty($account->sponsor_id)) return false;
+        return self::get($account->sponsor_id);
+    }
+
+    public static function getBinaryUpline(DB\account|string|int $account): DB\accountX|false{
+        $account = self::get($account);
+        if(!empty($account->placement_account_id) && !($account->placement_id > 0)){
+            Assert::throw(
+                "account:".$account->account_code
+                ." has placement code info:".$account->placement_account_id
+                ." but has not placement_id");
+        }
+        if(empty($account->placement_id)) return false;
+        return self::get($account->placement_id);
+    }
 }
