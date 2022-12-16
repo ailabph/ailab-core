@@ -369,18 +369,20 @@ class Tools
                 $extracted_value = self::getValueFromArray($property,$from_data,$strict);
             }
             else{
-                if($strict){
-                    if(!property_exists($from_data,$property)){
-                        Assert::throw("property$property does not exist on source data object");
-                    }
+                if(!property_exists($from_data,$property)){
+                    if($strict) Assert::throw("property$property does not exist on source data object");
                 }
-                $extracted_value = $from_data->{$property};
+                else{
+                    $extracted_value = $from_data->{$property};
+                }
             }
             $property_with_prefix = $prefix . $property;
             if(!property_exists($to_object,$property_with_prefix)){
-                Assert::throw("unable to copy value to property:$property_with_prefix. property does not exist");
+                if($strict) Assert::throw("unable to copy value to property:$property_with_prefix. property does not exist");
             }
-            $to_object->{$property_with_prefix} = is_null($extracted_value) && isset($value) ? $value : $extracted_value;
+            else{
+                $to_object->{$property_with_prefix} = is_null($extracted_value) && isset($value) ? $value : $extracted_value;
+            }
         }
     }
 
