@@ -4,6 +4,11 @@ core framework classes
 ---
 ## Changelog
 
+v.0.53.5
+ - add empty logs
+ - add logs folder with empty php file
+ - add pure flag in products getter
+
 v.0.53.2
  - add initial class for session
  - use core session to check if logged in
