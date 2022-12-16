@@ -43,8 +43,10 @@ class DataAccount
                 ." has sponsor code info:".$account->sponsor_account_id
                 ." but has not sponsor_id");
         }
-        if(empty($account->sponsor_id)) return false;
-        return self::get($account->sponsor_id);
+        if(empty($account->sponsor_account_id)) return false;
+        $sponsor = self::get($account->sponsor_id);
+        if($sponsor->id != $account->sponsor_id) Assert::throw("sponsor id do not match");
+        return $sponsor;
     }
 
     public static function getBinaryUpline(DB\account|string|int $account): DB\accountX|false{
