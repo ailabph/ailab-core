@@ -144,6 +144,7 @@ config.ini.php
 /.phpunit.result.cache
 /php-error.log
 /logs/*.log
+!/logs/index.php
 /node/node_modules/
 /node/*
 !/node/index.php
