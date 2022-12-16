@@ -202,7 +202,7 @@ class Tools
     #region CHECKERS
 
     static public function isLoggedIn(): bool{
-        return isset($GLOBALS["user"]) && $GLOBALS["user"] instanceof DB\user;
+        return Session::getCurrentUser() instanceof DB\user;
     }
 
     static public function isInModule(): bool{
