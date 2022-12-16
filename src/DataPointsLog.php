@@ -14,7 +14,6 @@ class DataPointsLog
         $wallet_header = Tools::appClassExist("wallet_header");
         $points_logList = Tools::appClassExist("points_logList");
         $points_log = Tools::appClassExist("points_log");
-        Tools::checkPropertiesExistInClass($points_log,["ACTIONS"]);
 
         $points_logX = Tools::appClassExist("points_logX");
         Tools::checkPropertiesExistInClass($points_logX,[
