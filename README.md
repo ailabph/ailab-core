@@ -4,6 +4,11 @@ core framework classes
 ---
 ## Changelog
 
+v.0.53.2
+ - add initial class for session
+ - use core session to check if logged in
+ - bug fixes
+
 v.0.52.9
  - fix bug not able to log if called via hook call
  - add implementation to add value via hrtime if primary key is an non-auto increment integer
