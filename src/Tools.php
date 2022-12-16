@@ -330,6 +330,23 @@ class Tools
         }
         self::log(message:$log,category: "debug",force_write: true,print_trace: false);
     }
+
+    public static function emptyLogs(){
+        // get a list of all files in the specified folder
+        $logs_dir = Config::getBaseDirectory()."/logs/*";
+        $files = glob($logs_dir);
+
+        // iterate over the list of files
+        foreach($files as $file) {
+            // skip the index.php file
+            if(str_contains($file,"index.php")){
+                continue;
+            }
+            // delete the file
+            unlink($file);
+        }
+    }
+
     #endregion END OF LOGGERS
 
 
