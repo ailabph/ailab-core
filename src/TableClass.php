@@ -67,6 +67,10 @@ abstract class TableClass implements TableClassI, Loggable
         return strtolower($this->data_property_types[$property]);
     }
 
+    public function getPrimaryKey():string|false{
+        return count($this->dataKeysPrimary) > 0 ? $this->dataKeysPrimary[0] : false;
+    }
+
     #endregion
 
 
@@ -140,6 +144,35 @@ abstract class TableClass implements TableClassI, Loggable
     public function hasPlaceholderValue(string $property):bool{
         $value = $this->getValue($property);
         return $value == self::UNDEFINED_STRING || $value == self::UNDEFINED_NUMBER;
+    }
+
+    public function hasAutoIncPrimaryKey(){
+        $primaryKey = $this->getPrimaryKey();
+        if(!$primaryKey) return false;
+        return in_array($primaryKey,$this->dataKeysAutoInc);
+    }
+
+    public function hasPrimaryKey(): bool{
+        return !empty($this->getPrimaryKey());
+    }
+
+    public function isIntegerPrimaryKey(string $property): bool{
+        $this->propertyExists($property);
+        if(!in_array($property,$this->dataKeysPrimary)) return false;
+        $type = Tools::getPhpTypeFromSqlType($this->getType($property));
+        return $type == Tools::INT;
+    }
+
+    public function hasIntegerPrimaryKey(): bool{
+        if(!$this->hasPrimaryKey()) return false;
+        $type = Tools::getPhpTypeFromSqlType($this->getType($this->getPrimaryKey()));
+        return $type == Tools::INT;
+    }
+
+    public function hasNonAutoIncIntPrimaryKey(): bool{
+        return
+            $this->hasIntegerPrimaryKey()
+            && !$this->hasAutoIncPrimaryKey();
     }
 
     #endregion END CHECKERS
@@ -325,6 +358,14 @@ abstract class TableClass implements TableClassI, Loggable
         $insertValues = "";
         $insertParam = [];
 
+        if($this->hasNonAutoIncIntPrimaryKey()){
+            $primaryKey = $this->getPrimaryKey();
+            if(empty($primaryKey)) Assert::throw("expected to have primary key",__LINE__);
+            self::addLog("non auto increment integer primary key detected, using hrtime for value in primary key:$primaryKey",__LINE__);
+            $this->{$primaryKey} = hrtime(true);
+            self::addLog("primary key value:".$this->{$primaryKey},__LINE__);
+        }
+
         foreach ($this->data_properties as $property){
             if(in_array($property,$this->dataKeysAutoInc)) continue;
             if($this->hasValue($property)){
@@ -463,9 +504,10 @@ abstract class TableClass implements TableClassI, Loggable
     protected function checkRequiredValues(){
         foreach ($this->required as $property) {
             if(in_array($property,$this->dataKeysAutoInc)) continue;
+            if($this->isIntegerPrimaryKey($property)) continue;
             $property_type = Tools::getPhpTypeFromSqlType($this->getType($property));
             if($property_type == Tools::INT || $property_type == Tools::FLOAT){
-                if($this->{$property} == -999){
+                if($this->{$property} == self::UNDEFINED_NUMBER){
                     Assert::throw("Unable to save, property:$property is required");
                 }
             }
