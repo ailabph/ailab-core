@@ -4,6 +4,12 @@ core framework classes
 ---
 ## Changelog
 
+v.0.52.9
+ - fix bug not able to log if called via hook call
+ - add implementation to add value via hrtime if primary key is an non-auto increment integer
+ - fix bug in importing values to object
+ - add check if no sponsor_id, throws error
+
 v.0.52.5
  - fix bug that throws error if default X class does not exist
 
