@@ -5,34 +5,18 @@ use App\DBClassGenerator\DB;
 
 class DataAccount
 {
-    public static function get(DB\account|string|int $account): DB\accountX{
-        $to_return = new DB\accountX();
-        $get_method = "";
+    private static bool $initiated = false;
+    private static function init(){
+        if(self::$initiated) return;
+        $account = Tools::appClassExist("account");
+        $accountX = Tools::appClassExist("accountX");
+        Tools::checkPropertiesExistInClass($accountX,["fullname"]);
+        self::$initiated = true;
+    }
+    public static function get(DB\account|string|int $account, bool $baseOnly = false): DB\accountX|DB\account{
+        self::init();
+        return DataGeneric::get("account","accountX",$account,"id","account_code",$baseOnly);
 
-        if($account instanceof DB\accountX){
-            $get_method = ",via passed accountX object";
-            $to_return = $account;
-        }
-        else if($account instanceof DB\account){
-            $get_method = ", via conversion to accountX object, id:$account->id";
-            $to_return = self::get($account->id);
-        }
-
-        if($to_return->isNew() && is_numeric($account)){
-            $get_method = ", via account id:$account";
-            $to_return = new DB\accountX(["id"=>$account]);
-        }
-
-        if($to_return->isNew() && is_string($account)){
-            $get_method = ", via account_code:$account";
-            $to_return = new DB\accountX(["account_code"=>$account]);
-        }
-
-        if($to_return->isNew()){
-            Assert::throw("account record not retrieved from database".$get_method);
-        }
-
-        return $to_return;
     }
 
     public static function getSponsorUpline(DB\account|string|int $account): DB\accountX|false{
