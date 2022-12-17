@@ -24,34 +24,15 @@ class DataUser
         "processUserAfterCreate" => "",
     ];
 
-    public static function get(DB\user|string|int $user): DB\userX{
+    public static function get(DB\user|string|int $user, bool $baseOnly = false): DB\userX|DB\user{
         self::init();
-        $to_return = new DB\userX();
-        $get_method = "";
-
-        if($user instanceof DB\userX){
-            $get_method = ", via passed userX object";
-            $to_return = $user;
-        }
-        else if($user instanceof DB\user){
-            $get_method = ", via conversion to userX object, id:$user->id";
-            $to_return = self::get($user->id);
-        }
-
-        if($to_return->isNew() && is_numeric($user)){
-            $get_method = ", via user id:$user";
-            $to_return = new DB\userX(["id"=>$user]);
-        }
-
-        if($to_return->isNew() && is_string($user)){
-            $get_method = ", via username:$user";
-            $to_return = new DB\userX(["username"=>$user]);
-        }
-
-        if($to_return->isNew()){
-            Assert::throw("user record not retrieved from database".$get_method);
-        }
-        return $to_return;
+        return DataGeneric::get(
+            base_class:"user",
+            extended_class: "userX",
+            dataObj: $user,
+            priKey: "id",
+            uniKey: "username",
+            baseOnly: $baseOnly);
     }
 
     /**
@@ -68,7 +49,7 @@ class DataUser
         self::processDataBeforeCreate($data);
         $user = new DB\userX();
         $user->qr_hash = Random::getRandomStr(length: 8);
-        $user->loadValues(data:$data, strict:true);
+        $user->loadValues(data:$data,isNew: true, strict:true);
         self::processUserAfterCreate($user);
         if($saveRecord) $user = self::save($user);
         return $user;
