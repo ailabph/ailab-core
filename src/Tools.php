@@ -26,7 +26,7 @@ class Tools
     /**
      * @throws Exception
      */
-    static public function getCurrentUser(): DB\userX{
+    static public function getCurrentUser(bool $throw = true): DB\userX{
         if(!self::isLoggedIn()) Assert::throw("unable to retrieve current user, not logged in");
         return $GLOBALS["user"];
     }
@@ -228,9 +228,17 @@ class Tools
     {
         if(!class_exists($class)) Assert::throw("class: $class does not exist");
         foreach ($properties as $property) {
-            if(!property_exists($class,$property)){
-                Assert::throw("property:$property does not exist in $class");
+            if(str_contains($property,"::")){
+                if(!defined($class.$property)){
+                    Assert::throw("constant $property does not exist");
+                }
             }
+            else{
+                if(!property_exists($class,$property)){
+                    Assert::throw("property:$property does not exist in $class");
+                }
+            }
+
         }
         return true;
     }
@@ -401,6 +409,27 @@ class Tools
                 $to_object->{$property_with_prefix} = is_null($extracted_value) && isset($value) ? $value : $extracted_value;
             }
         }
+    }
+
+    public static function parseKeyArray(array $data, string $key, bool $throw = true){
+        if(!isset($data[$key])){
+            if($throw) Assert::throw("$key data is required");
+            return false;
+        }
+        return $data[$key];
+    }
+
+    public static function parsePropertyFromObject(object $object, string $property, bool $throw = true): string|false{
+        if(!property_exists($object,$property)){
+            if($throw) Assert::throw("property $property is required");
+            return false;
+        }
+        return $object->{$property};
+    }
+
+    public static function parseJson(string $data): object|array{
+        Assert::isJsonString($data);
+        return json_decode(htmlspecialchars_decode($data, ENT_QUOTES));
     }
 
     #endregion END OF DATA PROCESS
