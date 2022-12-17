@@ -9,25 +9,30 @@ class Patcher implements Loggable
 {
     public static string $patch_record_json_file = "patch_record.json";
 
-    public static function runPatch(bool $regenerate_classes = false){
+    public static function runPatch(bool $regenerate_classes = true){
         $site_patch_executed = self::runSiteLevelPatch();
         $core_patch_executed = self::runCorePatches();
+
+        self::addLog("site_patch_executed:$site_patch_executed",__LINE__);
+        self::addLog("core_patch_executed:$site_patch_executed",__LINE__);
 
         // if local, generate classes
         if(!$regenerate_classes){
             self::addLog("skipping generation of db classes",__LINE__);
             return;
         }
-        if(Config::getEnv() == Config::ENV["local"] && ($site_patch_executed > 0 || $core_patch_executed > 0)){
-            self::addLog("local env detected, generating db class php",__LINE__);
+        $is_local_or_test_env = Config::getEnv() == Config::ENV["local"] || Config::getEnv() == Config::ENV["test"];
+        $has_patch_executed = $site_patch_executed > 0 || $core_patch_executed > 0;
+        if($is_local_or_test_env && $has_patch_executed){
+            self::addLog("local or test env detected, generating db class php",__LINE__);
             GeneratorClassPhp::run();
         }
         else{
-            self::addLog("env(".Config::getEnv().") not local, skipping db class generation",__LINE__);
+            self::addLog("env(".Config::getEnv().") not local or test, skipping db class generation",__LINE__);
         }
     }
 
-    public static function runSiteLevelPatch():int{
+    private static function runSiteLevelPatch():int{
         $patch_executed = 0;
         $patch_record = self::getPatchJsonFile();
         $patch_dir = self::getPatchDirectory(of_core_module: false);
@@ -44,11 +49,12 @@ class Patcher implements Loggable
 
         foreach($patches as $file_name){
             $key = str_replace(".php","",$file_name);
+            $key_env = Config::getEnv() . "_" .$key;
             $patch_path = $patch_dir . "/" . $file_name;
 
             self::addLog("executing patch:$key",__LINE__);
-            if(isset($patch_record->{$key})) {
-                self::addLog("skipping, patch already executed",__LINE__);
+            if(isset($patch_record->{$key_env})) {
+                self::addLog("skipping, patch already executed on this environment:".Config::getEnv(),__LINE__);
                 continue;
             }
 
@@ -56,7 +62,7 @@ class Patcher implements Loggable
             try{
                 self::addLog("running patch",__LINE__);
                 require_once($patch_path);
-                $patch_record->{$key} = time();
+                $patch_record->{$key_env} = time();
                 self::addLog("patch done",__LINE__);
             }catch (\Exception $e){
                 self::addLog("error executing patch:$key error:".$e->getMessage(),__LINE__);
@@ -71,7 +77,7 @@ class Patcher implements Loggable
         return $patch_executed;
     }
 
-    static function runCorePatches():int{
+    private static function runCorePatches():int{
         $patch_executed = 0;
         self::addLog("running core patches",__LINE__);
         $patch_record = self::getPatchJsonFile();
@@ -89,10 +95,11 @@ class Patcher implements Loggable
 
         foreach($patches as $file_name){
             $key = str_replace(".php","",$file_name);
+            $key_env = Config::getEnv() . "_" .$key;
             $patch_path = $patch_dir . "/" . $file_name;
 
             self::addLog("executing patch:$key",__LINE__);
-            if(isset($patch_record->{$key})) {
+            if(isset($patch_record->{$key_env})) {
                 self::addLog("skipping, patch already executed",__LINE__);
                 continue;
             }
@@ -101,7 +108,7 @@ class Patcher implements Loggable
             try{
                 self::addLog("running patch",__LINE__);
                 require_once($patch_path);
-                $patch_record->{$key} = time();
+                $patch_record->{$key_env} = time();
                 self::addLog("patch done",__LINE__);
             }catch (\Exception $e){
                 self::addLog("error executing patch:$key error:".$e->getMessage(),__LINE__);
@@ -139,7 +146,7 @@ class Patcher implements Loggable
     private static function updatePatchJsonFile(object $patch_record){
         $patch_dir = self::getPatchDirectory(of_core_module: false);
         $patch_json_file_path = $patch_dir . "/" . self::$patch_record_json_file;
-        file_put_contents($patch_json_file_path,json_encode($patch_record));
+        file_put_contents($patch_json_file_path,json_encode($patch_record,JSON_PRETTY_PRINT));
     }
 
     static function addLog(string|array|object $log, int $line)
