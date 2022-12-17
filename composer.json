@@ -24,6 +24,7 @@
         "mikey179/vfsstream": "^1.6",
         "ircmaxell/random-lib": "^1.2",
         "ext-pdo": "*",
-        "nesbot/carbon": "^2.64"
+        "nesbot/carbon": "^2.64",
+      "ext-bcmath": "*"
     }
 }
