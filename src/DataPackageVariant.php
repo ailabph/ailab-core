@@ -5,37 +5,33 @@ use App\DBClassGenerator\DB;
 
 class DataPackageVariant
 {
-    public static function get(DB\package_variant|string|int $variant): DB\package_variantX
+    private static bool $initiated = false;
+    private static function init(){
+        if(self::$initiated) return;
+        $package_header = Tools::appClassExist("package_header");
+        $package_variant = Tools::appClassExist("package_variant");
+        $package_variantX = Tools::appClassExist("package_variantX");
+        self::$initiated = true;
+    }
+
+    public static function get(DB\package_variant|string|int $variant, bool $baseOnly = false): DB\package_variantX|DB\package_variant
     {
-        if(!class_exists(DB\package_variantX::class)){
-            Assert::throw("must implement package_variantX");
-        }
-        $to_return = new DB\package_variantX();
-        $get_method = "";
+        self::init();
+        return DataGeneric::get(
+            base_class: "package_variant",
+            extended_class: "package_variantX",
+            dataObj: $variant,
+            priKey: "id",
+            uniKey:"package_tag",
+            baseOnly:$baseOnly
+        );
+    }
 
-        if($variant instanceof DB\package_variantX){
-            $get_method = ", via passed package_variantX";
-            $to_return = $variant;
-        }
-        else if($variant instanceof DB\package_variant){
-            $get_method = ", via conversion to package_variantX id:$variant->id";
-            $to_return = new DB\package_variantX(["id"=>$variant->id]);
-        }
-
-        if($to_return->isNew() && is_numeric($variant)){
-            $get_method = ", via variant id:$variant";
-            $to_return = new DB\package_variantX(["id"=>$variant]);
-        }
-
-        if($to_return->isNew() && is_string($variant)){
-            $get_method = ", via variant tag:$variant";
-            $to_return = new DB\package_variantX(["package_tag"=>$variant]);
-        }
-
-        if($to_return->isNew()){
-            Assert::throw("unable to retrieve variant".$get_method);
-        }
-
-        return $to_return;
+    public static function getDefault(int|string|DB\package_header $package_header): DB\package_variantX{
+        $topVariant = new DB\package_variantList(
+            " WHERE package_id=:package_id"
+            ,[":package_id"=>$package_header->id]," ORDER BY id ASC LIMIT 1");
+        if($topVariant->count() == 0) Assert::throw("No default package variant for package $package_header->package_tag");
+        return $topVariant->fetch();
     }
 }
