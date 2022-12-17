@@ -4,6 +4,32 @@ core framework classes
 ---
 ## Changelog
 
+v.0.63.12
+- major:
+  - add class for code ownership log
+  - implement generation of entry and product codes
+  - add generic class getter
+  - add class for image_log
+  - add class for data inventory order
+  - add class for data order detail
+  - add class for data order header
+  - add data class for payment
+  - implement creation of payment for entry and products
+  - add class for permissions
+- minor:
+  - add bcmath as requirement
+  - add test for data codes
+  - codes patch for variant_tag and product_tag
+  - codes patch for price_paid
+  - order_header patch make hash unique
+  - order_detail patch make hash unique
+  - package_variant patch make package_tag unique
+  - payment patch make payment_ref unique
+  - code improvements
+  - add test for data payment
+  - disable tests for render
+  - added new helper methods
+
 v.0.53.5
  - add empty logs
  - add logs folder with empty php file
