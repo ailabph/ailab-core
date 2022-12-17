@@ -103,6 +103,6 @@ class ToolsTest extends TestCase
         $test_obj = (object)["first_name"=>""];
         $test_array = ["last_name"=>"joe"];
         self::expectException(Exception::class);
-        Tools::importValuesToObject($test_array,$test_obj,true);
+        Tools::importValuesToObject( from_data:$test_array,to_object:$test_obj,strict:true);
     }
 }
