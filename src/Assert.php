@@ -50,8 +50,13 @@ class Assert
     /**
      * @throws Exception
      */
-    static public function throw(string $error_message, string $context = "", string $error_tag = ""){
+    static public function throw(string $error_message, string $context = "", string $error_tag = "", bool $critical_error = false){
         self::isNotEmpty($error_message,$context,$error_tag);
+
+        if($critical_error){
+            Tools::log(message:$error_message,category:"system",force_write: true,print_trace: true);
+            $error_message = "System Error";
+        }
 
         $formatted_msg = empty($context) ? $error_message : "Invalid $context, $error_message";
         $formatted_msg = empty($error_tag) ? $formatted_msg : "[$error_tag] $formatted_msg";
@@ -90,4 +95,22 @@ class Assert
         return true;
     }
     #endregion
+
+
+    public static function isJsonString(string $data, bool $throw = true): bool{
+        json_decode($data);
+        if(json_last_error() != JSON_ERROR_NONE){
+            if($throw){
+                assert::throw("not a valid json format");
+            }
+            else{
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static function recordExist(TableClass $dataObj){
+        if($dataObj->isNew()) Assert::throw(error_message:"record state is new",critical_error: true);
+    }
 }
