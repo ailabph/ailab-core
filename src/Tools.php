@@ -230,7 +230,7 @@ class Tools
         foreach ($properties as $property) {
             if(str_contains($property,"::")){
                 if(!defined($class.$property)){
-                    Assert::throw("constant $property does not exist");
+                    Assert::throw("constant $property does not exist in $class");
                 }
             }
             else{
@@ -319,7 +319,7 @@ class Tools
     public static function logIncident(string $message, string $category, bool $printLoggedDevice = true, bool $printStackTrace = true){
         $category = $category ."_incident";
         if($printLoggedDevice){
-            $username = self::isLoggedIn() ? self::getCurrentUser()->getUsername() : "";
+            $username = self::isLoggedIn() ? self::getCurrentUser()->username : "";
             $fp = self::getFingerprint();
             $ip = self::getIpAddress();
             $device = self::getUserAgent();
