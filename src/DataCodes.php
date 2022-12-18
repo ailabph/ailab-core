@@ -32,6 +32,13 @@ class DataCodes implements Loggable
         );
     }
 
+    public static function getProductCodes(int|string|DB\user $owner, bool $unused = true): DB\codesList{
+        $owner = DataUser::get($owner);
+        return new DB\codesList(
+            " WHERE owned_by=:user_id AND status=:status ",
+            [":user_id"=>$owner->id,":status"=>($unused?"o":"c")]);
+    }
+
     #region ENTRY
     public static function createNewEntryCodes(
         int|string|DB\package_variant $variant,
@@ -301,6 +308,18 @@ class DataCodes implements Loggable
         if($code->product_id > 0){
             if(empty($code->product_tag)) Assert::throw(error_message:"product_tag missing",critical_error: true);
         }
+    }
+
+    public static function isProductCode(DB\codes $code, bool $throw = false):bool {
+        if($code->code_type == "p") return true;
+        else if($throw) Assert::throw("code is not of product type");
+        return false;
+    }
+
+    public static function isEntryCode(DB\codes $code, bool $throw = false): bool{
+        if($code->code_type == "e") return false;
+        else if($throw) Assert::throw("code is not of entry type");
+        return false;
     }
 
     #endregion CHECKS
