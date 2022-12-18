@@ -114,9 +114,13 @@ class DataPointsLog
     ): DB\points_log
     {
         if($account_snapshot){
-            $point->snapshot_account = json_encode($account_snapshot);
+            $clean_account = new DB\account();
+            $clean_account->loadValues(data:$account_snapshot,isNew:false,strict: true);
+            $point->snapshot_account = json_encode($clean_account);
         }
         if($wallet_snapshot){
+            $clean_wallet = new DB\wallet_header();
+            $clean_account->loadValues(data:$wallet_snapshot,isNew: false,strict: true);
             $point->snapshot_wallet = json_encode($wallet_snapshot);
         }
         $point->save();
@@ -137,4 +141,8 @@ class DataPointsLog
         }
         return new DB\points_logList($where,$param,$order??"");
     }
+
+    #region ASSERT
+
+    #endregion END ASSERT
 }
