@@ -113,4 +113,13 @@ class Assert
     public static function recordExist(TableClass $dataObj){
         if($dataObj->isNew()) Assert::throw(error_message:"record state is new",critical_error: true);
     }
+
+    public static function isValidDate(string $date, bool $throw = true):bool {
+        $time = strtotime($date);
+        if(!$time){
+            if($throw) Assert::throw("invalid date");
+            return false;
+        }
+        return true;
+    }
 }
