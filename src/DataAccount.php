@@ -10,7 +10,6 @@ class DataAccount
         if(self::$initiated) return;
         $account = Tools::appClassExist("account");
         $accountX = Tools::appClassExist("accountX");
-        Tools::checkPropertiesExistInClass($accountX,["fullname"]);
         self::$initiated = true;
     }
     public static function get(DB\account|string|int $account, bool $baseOnly = false): DB\accountX|DB\account{
