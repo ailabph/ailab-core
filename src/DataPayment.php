@@ -323,10 +323,10 @@ class DataPayment implements Loggable
             Assert::throw("payment approval not complete. process possible not yet implemented");
         }
 
-        if ($payment->purchase_type != DB\paymentX::$PURCHASE_TYPE["ecoin"]) {
-            Assert::throw("not yet implemented");
+//        if ($payment->purchase_type != DB\paymentX::$PURCHASE_TYPE["ecoin"]) {
+//            Assert::throw("not yet implemented");
 //            delivery_headerX::createStandardDeliveryFromApprovedPayment($payment);
-        }
+//        }
 
         # CREDITS SYSTEM
 //        if(top_up_credits_headerX_get::topUpSystemEnabled()){
