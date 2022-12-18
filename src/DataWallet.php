@@ -13,8 +13,15 @@ class DataWallet
         self::$initiated = true;
     }
 
-    public static function get(int|DB\wallet_header $wallet): DB\wallet_header{
+    public static function get(int|string|DB\user $user): DB\wallet_header{
         self::init();
-        return DataGeneric::get("wallet_header","",$wallet,"user_id","",true,true);
+        $user = DataGeneric::get("user","userX",$user,"id","username",true,true);
+        $wallet_header = new DB\wallet_header(["user_id"=>$user->id]);
+        if($wallet_header->isNew()){
+            $wallet_header->balance = 0;
+            $wallet_header->status = "o";
+            $wallet_header->save();
+        }
+        return $wallet_header;
     }
 }
