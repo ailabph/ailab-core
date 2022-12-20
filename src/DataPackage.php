@@ -17,8 +17,8 @@ class DataPackage
     {
         self::init();
         return DataGeneric::get(
-            base_class: "order_header",
-            extended_class: "order_headerX",
+            base_class: "package_header",
+            extended_class: "package_headerX",
             dataObj: $package,
             priKey: "id",
             uniKey:"package_tag",
