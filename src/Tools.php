@@ -409,7 +409,10 @@ class Tools
                 if($strict) Assert::throw("unable to copy value to property:$property_with_prefix. property does not exist");
             }
             else{
-                $to_object->{$property_with_prefix} = is_null($extracted_value) && isset($value) ? $value : $extracted_value;
+                // suppress errors of incompatible types
+                try{
+                    $to_object->{$property_with_prefix} = is_null($extracted_value) && isset($value) ? $value : $extracted_value;
+                }catch (\TypeError $e){}
             }
         }
     }
