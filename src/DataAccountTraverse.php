@@ -14,7 +14,7 @@ class DataAccountTraverse implements Loggable
      * @param string $hook_sponsor_action
      */
     public static function traverseSponsorUplines(
-        DataAccountTraverseInfo $traverseData,
+        DataAccountTraverseInfo &$traverseData,
         string                  $hook_sponsor_action = "",
     ){
         $current_account = $traverseData->source_account;
@@ -23,14 +23,17 @@ class DataAccountTraverse implements Loggable
             " sponsor_level:".$current_account->sponsor_level
             ,__LINE__);
         while($current_account = DataAccount::getSponsorUpline($current_account)){
+            self::addLog(Tools::LINE_SEPARATOR,__LINE__);
             self::addLog(
                 "retrieved sponsor upline:".$current_account->account_code.
                 " sponsor_level:".$current_account->sponsor_level,__LINE__);
             $traverseData->current_level = $current_account->sponsor_level;
             $traverseData->traverse_count++;
-            if(Assert::isCallable(method:$hook_sponsor_action,throw:false)){
-                self::addLog("running hook function:$hook_sponsor_action",__LINE__);
-                call_user_func_array($hook_sponsor_action,["current_account"=>&$current_account,"traverseData"=>&$traverseData]);
+            if(!empty($hook_sponsor_action)){
+                if(Assert::isCallable(method:$hook_sponsor_action,throw:true)){
+                    self::addLog("running hook function:$hook_sponsor_action",__LINE__);
+                    call_user_func_array($hook_sponsor_action,["current_account"=>&$current_account,"traverseData"=>&$traverseData]);
+                }
             }
         }
     }
