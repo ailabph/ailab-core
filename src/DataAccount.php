@@ -12,6 +12,9 @@ class DataAccount
         $accountX = Tools::appClassExist("accountX");
         self::$initiated = true;
     }
+
+    #region GETTERS
+
     public static function get(DB\account|string|int $account, bool $baseOnly = false): DB\accountX|DB\account{
         self::init();
         return DataGeneric::get("account","accountX",$account,"id","account_code",$baseOnly);
@@ -43,4 +46,22 @@ class DataAccount
         if(empty($account->placement_id)) return false;
         return self::get($account->placement_id);
     }
+
+    #endregion END OF GETTERS
+
+
+    #region PROCESS
+
+    # TODO: for implementation
+    public static function encode(DB\user $user, DB\codes $entry_code, $placement, $position, $sponsor): DB\account{
+        // hook before encode
+        // hook after encode
+    }
+    # TODO: for implementation
+    public static function upgrade(DB\account $account, DB\codes $upgrade_code): account{
+        // hook before upgrade
+        // hook after upgrade
+    }
+
+    #endregion END OF PROCESS
 }
