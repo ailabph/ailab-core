@@ -4,6 +4,11 @@ core framework classes
 ---
 ## Changelog
 
+v.0.70.13
+- fix bug on load payment values
+- suppress type errors
+- add experimental method to check if value is compatible to property
+
 v.0.70.10
 - major
   - implement data class for wallet
