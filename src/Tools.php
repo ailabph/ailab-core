@@ -393,6 +393,7 @@ class Tools
         bool         $strict = false,
     ){
         foreach ($to_object as $property => $value){
+            $extracted_value = null;
             if(is_array($from_data)){
                 $extracted_value = self::getValueFromArray($property,$from_data,$strict);
             }
