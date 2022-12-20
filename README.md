@@ -4,6 +4,27 @@ core framework classes
 ---
 ## Changelog
 
+v.0.70.10
+- major
+  - implement data class for wallet
+  - implement data class for center coin
+  - implement generation of coins
+  - implement use of top up credits
+  - implement class for sms queue sending
+  - implement data class for top up credits
+  - implement data class for top up request
+- minor
+  - add assert check date
+  - add getter for product codes and check
+  - use load values to remove excess properties for snapshot in points log
+  - add improved method to retrieve wallet
+  - throw error if hook provided is not callable
+  - implement compiled logs with no query info
+  - fix bug invalid class usage
+  - add patch for top up credits and request
+  - add test for top up
+  - bug fixes
+
 v.0.63.12
 - major:
   - add class for code ownership log
