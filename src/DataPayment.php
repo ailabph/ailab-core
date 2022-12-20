@@ -79,6 +79,7 @@ class DataPayment implements Loggable
                 TimeHelper::getTimeAsCarbon($time_created);
 
         $newPayment = new DB\paymentX();
+        $newPayment->loadValues(data:$data,isNew: true);
         $newPayment->payment_referrence = self::generatePaymentReference();
         self::assertValidPurchaseType($purchase_type);
         $newPayment->purchase_type = $purchase_type;
@@ -90,7 +91,6 @@ class DataPayment implements Loggable
         $newPayment->time_payment = $time_created->getTimestamp();
         $newPayment->status = "n";
 
-        Tools::importValuesToObject($data,$newPayment);
         if (is_string($newPayment->time_payment)) {
             $newPayment->time_payment = TimeHelper::getTimeAsCarbon($newPayment->time_payment)->getTimestamp();
         }
