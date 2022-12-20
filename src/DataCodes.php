@@ -325,6 +325,16 @@ class DataCodes implements Loggable
     #endregion CHECKS
 
 
+    #region PROCESS
+
+    # TODO: for implementation
+    static public function useProduceCode(DB\account $for_account, DB\codes $prod_code){}
+    # TODO: for implementation
+    static public function transfer(DB\codes $code, DB\user|string|int $to_user){}
+
+    #endregion END OF PROCESS
+
+
     #region UTILITIES
     public static function generateAccountNumber(): string{
         do{
