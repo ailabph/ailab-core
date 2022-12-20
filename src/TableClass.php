@@ -6,6 +6,7 @@ use Exception;
 use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\Pure;
 use PDO;
+use ReflectionProperty;
 
 abstract class TableClass implements TableClassI, Loggable
 {
@@ -146,7 +147,8 @@ abstract class TableClass implements TableClassI, Loggable
         return $value == self::UNDEFINED_STRING || $value == self::UNDEFINED_NUMBER;
     }
 
-    public function hasAutoIncPrimaryKey(){
+    public function hasAutoIncPrimaryKey(): bool
+    {
         $primaryKey = $this->getPrimaryKey();
         if(!$primaryKey) return false;
         return in_array($primaryKey,$this->dataKeysAutoInc);
@@ -173,6 +175,45 @@ abstract class TableClass implements TableClassI, Loggable
         return
             $this->hasIntegerPrimaryKey()
             && !$this->hasAutoIncPrimaryKey();
+    }
+
+    // EXPERIMENTAL METHOD TO CHECK IF VALUE CAN BE SAFELY ASSIGNED TO PROPERTY
+    public function checkValueType(string $property, $value): bool {
+        // Reflect on the property
+        $reflection = new ReflectionProperty($this, $property);
+        $type = $reflection->getType();
+
+        // Check if the property has a declared type
+        if ($type === null) {
+            // If the property has no declared type, any value can be assigned to it
+            return true;
+        }
+
+        // Get the name of the declared type
+        $typeName = $type->getName();
+
+        // Check if the value is of the correct type
+        $is_numeric = ["int","float"];
+        $boolean_value = [1,0,true,false];
+        $typeName = explode("|",$typeName);
+
+        if($is_numeric($value)){
+            return array_intersect($is_numeric,$typeName) > 0;
+        }
+
+        if(is_null($value)){
+            return in_array("null",$typeName);
+        }
+
+        if(is_string($value)){
+            return in_array("string",$typeName);
+        }
+
+        if(in_array("bool",$typeName)){
+            return in_array($value,$boolean_value);
+        }
+
+        return $value instanceof $typeName;
     }
 
     #endregion END CHECKERS
@@ -224,10 +265,6 @@ abstract class TableClass implements TableClassI, Loggable
             }
         }
 
-        if(empty($where)){
-            Assert::throw("Unable to build a where for the query");
-        }
-
         return ["where"=>$where,"param"=>$param];
     }
 
@@ -242,6 +279,8 @@ abstract class TableClass implements TableClassI, Loggable
             $where = $whereParam["where"];
             $param = $whereParam["param"];
         }
+
+        if(empty($where)) return false;
 
         $sql =  "SELECT ".$select." FROM ".$this->getTableName(true)." ";
         $sql .= $join." ".$where." ".$order;
@@ -470,13 +509,15 @@ abstract class TableClass implements TableClassI, Loggable
             if(!in_array($property,$this->data_properties) && $strict) continue;
             if(!property_exists($this,$property)) continue;
             if(in_array($property, $exclude)) continue;
-            $this->{$property} = $value;
+            // suppress errors of incompatible types
+            try{ $this->{$property} = $value; }catch (\TypeError $e){}
             if(!$isNew && !$manualLoad){
                 if(in_array($property,$this->data_properties)){
                     if(!property_exists($this,$property."_orig")){
                         Assert::throw("property:$property has no _orig property");
                     }
-                    $this->{$property."_orig"} = $value;
+                    // suppress errors of incompatible types
+                    try{ $this->{$property."_orig"} = $value; }catch (\TypeError $e){}
                 }
             }
         }
