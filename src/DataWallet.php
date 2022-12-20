@@ -9,7 +9,8 @@ class DataWallet
     private static bool $initiated = false;
     private static function init(){
         if(self::$initiated) return;
-        $account = Tools::appClassExist("wallet");
+        $wallet_header = Tools::appClassExist("wallet_header");
+        $user = Tools::appClassExist("user");
         self::$initiated = true;
     }
 
