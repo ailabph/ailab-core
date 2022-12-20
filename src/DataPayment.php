@@ -295,12 +295,11 @@ class DataPayment implements Loggable
 
         # GENERATE CENTER CREDITS
         if ($payment->purchase_type == DB\paymentX::$PURCHASE_TYPE["ecoin"]) {
-            Assert::throw("not yet implemented");
-//            $coinHeader = coin_generate::addFromPurchase($payment);
-//            $owner = userX_get::dynamic($payment->created_by);
+            $coinHeader = DataCoin::addFromPurchase($payment);
+            $owner = DataUser::get($payment->created_by);
 //            $message = "Hello $owner->firstname, your $payment->amount Center Credists has been added to your account";
 //            notification_center::notifyViaSMSOrEmail($owner->contact, $owner->email, $message, "Center Credits Purchase");
-//            $processed_payment = true;
+            $processed_payment = true;
         }
 
         # GENERATE INVENTORY ENTRY
@@ -329,10 +328,10 @@ class DataPayment implements Loggable
 //        }
 
         # CREDITS SYSTEM
-//        if(top_up_credits_headerX_get::topUpSystemEnabled()){
-//            $credit_header = top_up_credits_headerX_get::header();
-//            top_up_credits_headerX_do::useCredits($payment);
-//        }
+        if(DataTopUpCredits::topUpSystemEnabled()){
+            $credit_header = DataTopUpCredits::get();
+            DataTopUpCredits::useCredits($payment);
+        }
 
         return $payment;
     }
