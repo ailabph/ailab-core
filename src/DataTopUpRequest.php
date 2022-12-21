@@ -8,7 +8,7 @@ class DataTopUpRequest
 {
     private static bool $initiated = false;
 
-    private static function init()
+    public static function init()
     {
         if (self::$initiated) return;
         Tools::appClassExist("user");
