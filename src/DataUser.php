@@ -41,9 +41,9 @@ class DataUser
 
         $src = "";
         if( empty($user->profile_pic) || $user->profile_pic == "null" ){
-            $src = Config::getBaseDirectory() . "/" . ($user->gender == 'f' ? Config::getPublicOption('female_profile') : Config::getPublicOption('male_profile'));
+            $src = Config::getConfig()->site_url . "/" . ($user->gender == 'f' ? Config::getPublicOption('female_profile') : Config::getPublicOption('male_profile'));
         }else{
-            $src = Config::getBaseDirectory() ."/uploads/".$user->profile_pic.".jpg";
+            $src = Config::getConfig()->site_url ."/uploads/".$user->profile_pic.".jpg";
         }
         return $src;
     }
