@@ -246,6 +246,8 @@ class Render implements Loggable
             self::addLog("executing script body callback:".self::$BODY_WRAPPER_CALLBACK,__LINE__);
             require_once(self::$BODY_WRAPPER_CALLBACK);
         }
+        self::$BODY_WRAPPER_PARAM["page"] = self::$PAGE_NAME;
+        self::$BODY_WRAPPER_PARAM["page_details"] = self::$PAGE_DETAILS;
         self::$BODY_WRAPPER_PARAM["top_content"] = self::getTopContent();
         self::$BODY_WRAPPER_PARAM["content"] = self::getContent();
         self::$BODY_WRAPPER_PARAM["bottom_content"] = self::getBottomContent();
