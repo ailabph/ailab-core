@@ -192,12 +192,16 @@ class Render implements Loggable
     static private array $CONTENT_STACKS = [];
     static private array $CONTENT_TOP_STACKS = [];
     static private array $CONTENT_BOTTOM_STACKS = [];
+
+    public static bool $ENABLE_CONTENT_WRAPPER = false;
     static private string $CONTENT_WRAPPER_TWIG = "_content.twig";
     static private string $CONTENT_WRAPPER_TWIG_PATH = __DIR__ . "/tpl";
     static private array $CONTENT_WRAPPER_PARAM = [];
+
     static private string $BODY_WRAPPER_TWIG = "_body.twig";
-    static private array $BODY_WRAPPER_PARAM = [];
+    public static array $BODY_WRAPPER_PARAM = [];
     static private string $BODY_WRAPPER_TWIG_PATH = __DIR__."/tpl";
+    private static string $BODY_WRAPPER_CALLBACK = "";
 
     static public function resetContentStacks(){
         self::$CONTENT_STACKS = [];
@@ -223,7 +227,25 @@ class Render implements Loggable
         }
     }
 
+    static public function addBodyWrapperCallback(string $script_file, string $twig_name, string $twig_path = ""): void{
+        Assert::isPhpScriptAndExist(script_file: $script_file,throw: true);
+        self::$BODY_WRAPPER_CALLBACK = $script_file;
+        self::$BODY_WRAPPER_TWIG = $twig_name;
+        self::$BODY_WRAPPER_TWIG_PATH = $twig_path;
+    }
+
+    /**
+     * Must implement the following twig variables inside the twig file
+     * - top_content|raw
+     * - content|raw
+     * - bottom_content|raw
+     * @return string
+     */
     static public function getBodyContent():string{
+        if(!empty(self::$BODY_WRAPPER_CALLBACK)){
+            self::addLog("executing script body callback:".self::$BODY_WRAPPER_CALLBACK,__LINE__);
+            require_once(self::$BODY_WRAPPER_CALLBACK);
+        }
         self::$BODY_WRAPPER_PARAM["top_content"] = self::getTopContent();
         self::$BODY_WRAPPER_PARAM["content"] = self::getContent();
         self::$BODY_WRAPPER_PARAM["bottom_content"] = self::getBottomContent();
@@ -231,6 +253,7 @@ class Render implements Loggable
     }
 
     static public function addContentWrapper(string $twig, array $param = [], string $twig_path = ""){
+        self::$ENABLE_CONTENT_WRAPPER = true;
         self::$CONTENT_WRAPPER_TWIG = $twig;
         self::$CONTENT_WRAPPER_PARAM = $param;
         if(!empty($twig_path)){
@@ -258,8 +281,13 @@ class Render implements Loggable
 
     static public function getContent(): string{
         $content = implode(PHP_EOL, self::$CONTENT_STACKS);
-        self::$CONTENT_WRAPPER_PARAM["content"] = $content;
-        return self::pureRender(twig:self::$CONTENT_WRAPPER_TWIG,twig_path:self::$CONTENT_WRAPPER_TWIG_PATH ,param:self::$CONTENT_WRAPPER_PARAM);
+        if(self::$ENABLE_CONTENT_WRAPPER){
+            self::$CONTENT_WRAPPER_PARAM["content"] = $content;
+            if(self::$ENABLE_CONTENT_WRAPPER){
+                return self::pureRender(twig:self::$CONTENT_WRAPPER_TWIG,twig_path:self::$CONTENT_WRAPPER_TWIG_PATH ,param:self::$CONTENT_WRAPPER_PARAM);
+            }
+        }
+        return $content;
     }
 
     static public function addTopContent(string $script_file, bool $first_in_stack = false): void{
