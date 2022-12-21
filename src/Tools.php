@@ -295,9 +295,9 @@ class Tools
 
             $formatted_message .= $message;
             self::logPure(log:$formatted_message,file_name: $file_name);
-            if($category != "query"){
-                self::logPure(log:$formatted_message,file_name: "logs_no_query.log");
-            }
+//            if($category != "query"){
+//                self::logPure(log:$formatted_message,file_name: "logs_no_query.log");
+//            }
 
             if($print_trace){
                 try{
