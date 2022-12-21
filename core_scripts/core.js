@@ -31,13 +31,16 @@ function core_postForm(targetUrl = "", payload = [], divContainer = "", userCall
     if(_.isEmpty(targetUrl)){
         targetUrl = window.location.href + "post/";
     }
+    if(Cookies.get('fp').length){
+        payload += "&fp="+Cookies.get('fp');
+    }
     $.ajax({
         method: "POST",
         url: targetUrl,
         data: payload
     }).done(function(reply){
         if(!silent) core_doneLoading(divContainer);
-        core_ajaxReplyHandler(reply, userCallback);
+        core_ajaxReplyHandler(reply, userCallback, silent);
     }).fail(function( jqXHR, errorResponse ) {
         if(!silent) {
             core_doneLoading(divContainer);
@@ -49,22 +52,36 @@ function core_postForm(targetUrl = "", payload = [], divContainer = "", userCall
     });
 }
 
-function core_ajaxReplyHandler(reply, userCallback){
+function core_ajaxReplyHandler(reply, userCallback, silent = false){
     try{
         let data = JSON.parse(reply);
         if(data.success !== undefined){
-            core_modalMessage(data.success,"success",function(){
+            if(silent){
                 userCallback(data);
-            });
+            }
+            else{
+                core_modalMessage(data.success,"success",function(){
+                    userCallback(data);
+                });
+            }
         }
         else if(data.error !== undefined){
-            core_modalMessage(data.error,"error",()=>{});
+            if(silent){
+                console.log("ajax error response:"+data.error);
+            }
+            else{
+                core_modalMessage(data.error,"error",()=>{});
+            }
         }
         else{
-            bootbox.alert({message:"Something went wrong",className:"errorBootbox"});
+            if(silent){
+                console.log("something went wrong with the ajax request");
+            }
+            else{
+                bootbox.alert({message:"Something went wrong",className:"errorBootbox"});
+            }
         }
     }catch (e) {
-        bootbox.alert({message:"Something went wrong",className:"errorBootbox"});
         console.log("ERROR:");
         console.log(e.message);
     }
