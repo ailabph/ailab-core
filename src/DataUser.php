@@ -35,6 +35,19 @@ class DataUser
             baseOnly: $baseOnly);
     }
 
+    public static function getProfilePicSrc(null|int|string|DB\user $user = null): string{
+        if(is_null($user)) $user = Session::getCurrentUser();
+        else $user = self::get($user);
+
+        $src = "";
+        if( empty($user->profile_pic) || $user->profile_pic == "null" ){
+            $src = Config::getBaseDirectory() . "/" . ($user->gender == 'f' ? Config::getPublicOption('female_profile') : Config::getPublicOption('male_profile'));
+        }else{
+            $src = Config::getBaseDirectory() ."/uploads/".$user->profile_pic.".jpg";
+        }
+        return $src;
+    }
+
     /**
      * Hooks:
      * - processDataBeforeCreate(array)
