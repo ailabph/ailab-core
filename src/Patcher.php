@@ -10,6 +10,7 @@ class Patcher implements Loggable
     public static string $patch_record_json_file = "patch_record.json";
 
     public static function runPatch(bool $regenerate_classes = true){
+        self::addLog("executing patches, current_env:".Config::getEnv()." db:".Config::getConfig()->db_name,__LINE__);
         $site_patch_executed = self::runSiteLevelPatch();
         $core_patch_executed = self::runCorePatches();
 
@@ -63,6 +64,7 @@ class Patcher implements Loggable
                 self::addLog("running patch",__LINE__);
                 require_once($patch_path);
                 $patch_record->{$key_env} = time();
+                $patch_executed++;
                 self::addLog("patch done",__LINE__);
             }catch (\Exception $e){
                 self::addLog("error executing patch:$key error:".$e->getMessage(),__LINE__);
@@ -109,6 +111,7 @@ class Patcher implements Loggable
                 self::addLog("running patch",__LINE__);
                 require_once($patch_path);
                 $patch_record->{$key_env} = time();
+                $patch_executed++;
                 self::addLog("patch done",__LINE__);
             }catch (\Exception $e){
                 self::addLog("error executing patch:$key error:".$e->getMessage(),__LINE__);
