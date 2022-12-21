@@ -56,7 +56,7 @@ class CodesTest extends TestCase
 
     public function createAdmin():DB\userX{
         $user = AilabCore\DataUser::create([]);
-        $user->username = "admin";
+        $user->username = "admin_".AilabCore\Random::getRandomStr();
         $user->usergroup = "admin";
         $user->password = "1234";
         $user->save();

@@ -24,7 +24,7 @@ class PaymentTest extends TestCase
 
     public function createPayment(): DB\paymentX{
         $admin = AilabCore\DataUser::create([]);
-        $admin->username = "admin";
+        $admin->username = "admin_".AilabCore\Random::getRandomStr();
         $admin->password = "1234";
         $admin->usergroup = "admin";
         $admin->save();
