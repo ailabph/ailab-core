@@ -21,11 +21,20 @@ function core_doneLoading(divContainer = ""){
 
 //region AJAX
 //endregion
-function core_postDefault(){}
-function core_postPage(){}
+function core_postDefault(dataName,data,action,callback,silent = false,divContainer = ""){
+    if(!core_notEmpty(dataName) || !core_notEmpty(action)){
+        throw new Error("some parameters is not provided");
+    }
+    core_postForm(core_URL+"/data.php",data+"&"+action+"="+dataName,divContainer,callback,silent,true);
+}
+function core_postPage(dataName,data,action,callback,divContainer = "", silent = false, manualHandleReply = false){
+    if(!core_notEmpty(dataName) || !core_notEmpty(action)){
+        throw new Error("some parameters is not provided");
+    }
+    core_postForm(core_URL+"/",data+"&action=dataName",divContainer,callback,silent,manualHandleReply);
+}
 
-
-function core_postForm(targetUrl = "", payload = [], divContainer = "", userCallback, silent = false){
+function core_postForm(targetUrl = "", payload = [], divContainer = "", userCallback, silent = false, manualHandleReply = false){
     if(!silent) core_startLoading(divContainer);
 
     if(_.isEmpty(targetUrl)){
@@ -40,7 +49,8 @@ function core_postForm(targetUrl = "", payload = [], divContainer = "", userCall
         data: payload
     }).done(function(reply){
         if(!silent) core_doneLoading(divContainer);
-        core_ajaxReplyHandler(reply, userCallback, silent);
+        if(!manualHandleReply) core_ajaxReplyHandler(reply, userCallback, silent);
+        else userCallback(reply);
     }).fail(function( jqXHR, errorResponse ) {
         if(!silent) {
             core_doneLoading(divContainer);
@@ -108,4 +118,25 @@ function core_modalMessage(message, type, callback){
         className: modalClass,
         callback: callback
     });
+}
+
+function core_modalConfirm(msg,callback){
+    if(typeof callback == 'undefined') callback = function(){};
+    let box = bootbox.confirm({
+        title: "Notice",
+        size: "large",
+        message: msg,
+        callback: function(reply){
+            if(reply){
+                callback();
+            }
+        }
+    })
+    box.find('.modal-header').addClass("alert-warning");
+    box.find('.btn-primary').removeClass("btn-primary").addClass("btn-warning");
+}
+
+// UTILITIES
+function core_notEmpty(data){
+    return data && typeof data === "string" && data.trim() !== "";
 }
