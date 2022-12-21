@@ -4,6 +4,14 @@ core framework classes
 ---
 ## Changelog
 
+v.0.70.19
+- update tests
+- insert fp info in ajax call
+- emit event fp has been set
+- add getter for user profile pic
+- add callback wrapper function
+- fix double log in file
+
 v.0.70.13
 - fix bug on load payment values
 - suppress type errors
