@@ -4,6 +4,10 @@ core framework classes
 ---
 ## Changelog
 
+v.0.70.22
+- update core.js
+- fix bugs
+
 v.0.70.19
 - update tests
 - insert fp info in ajax call
