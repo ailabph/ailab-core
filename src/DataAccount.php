@@ -49,6 +49,17 @@ class DataAccount
 
     #endregion END OF GETTERS
 
+    #region CHECKS
+    public static function checkIntegrityAndSave(DB\account &$account){
+        if($account->sponsor_id < 0 && empty($account->sponsor_account_id)){
+            $account->sponsor_id = 0;
+        }
+        if($account->placement_id < 0 && empty($account->placement_account_id)){
+            $account->placement_id = 0;
+        }
+        $account->save();
+    }
+    #endregion
 
     #region PROCESS
 
