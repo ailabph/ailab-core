@@ -235,7 +235,7 @@ abstract class TableClass implements TableClassI, Loggable
 
         if(empty($where)){
             foreach ($this->dataKeysUnique as $key){
-                if(!empty($this->{$key})){
+                if(!empty($this->{$key}) && ($this->{$key} != self::UNDEFINED_NUMBER && $this->{$key} != self::UNDEFINED_STRING)){
                     $where .= " WHERE $property_divider".$this->wrapPropertyForQuery($key)."=:$key ";
                     $param[":$key"] = $this->{$key};
                     break;
@@ -251,6 +251,9 @@ abstract class TableClass implements TableClassI, Loggable
             foreach ($this->data_properties as $property){
                 if(!empty($this->{$property})){
                     if($this->{$property} == self::UNDEFINED_NUMBER || $this->{$property} == self::UNDEFINED_STRING){
+                        continue;
+                    }
+                    if($this->{$property} == $this->getDefault($property)){
                         continue;
                     }
                     if(empty($where)){
