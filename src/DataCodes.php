@@ -61,7 +61,7 @@ class DataCodes implements Loggable
         /** @var DB\user $owner */
         $owner = DataGeneric::getDataObjectsFromArray($args,"user");
 
-        self::hasGeneratedCodeFromPaymentOrCenterRelease($payment,$order_header);
+        self::hasGeneratedCodeFromPaymentOrCenterRelease(payment: $payment,order_header: $order_header,variant_id: $variant->id);
 
         if(!$owner){
             $owner = Session::getCurrentUser(throw:true);
@@ -174,7 +174,7 @@ class DataCodes implements Loggable
         /** @var DB\user $owner */
         $owner = DataGeneric::getDataObjectsFromArray($args,"user");
 
-        self::hasGeneratedCodeFromPaymentOrCenterRelease($payment,$order_header);
+        self::hasGeneratedCodeFromPaymentOrCenterRelease(payment: $payment,order_header: $order_header,product_id:$product->id);
 
         if(!$owner){
             $owner = Session::getCurrentUser(throw:true);
@@ -263,8 +263,13 @@ class DataCodes implements Loggable
     private static function hasGeneratedCodeFromPaymentOrCenterRelease(
         int|string|DB\payment|false $payment,
         int|string|DB\order_header|false $order_header,
+        int|null $variant_id = null,
+        int|null $product_id = null,
     ): void
     {
+        if(is_null($variant_id) && is_null($product_id)){
+            Assert::throw(error_message:"unable to check if code has been generated, no variant or prod id given",critical_error: true);
+        }
         if($payment){
             $payment = DataPayment::get($payment);
             if($payment->ne_order > 0){
@@ -276,12 +281,19 @@ class DataCodes implements Loggable
                 }
             }
             else{
-                $checkCodes = new DB\codesList(
-                    " WHERE payment_ref=:ref ",
-                    [":ref"=>$payment->payment_referrence]
-                );
+                $where = " WHERE payment_ref=:ref ";
+                $param[":ref"] = $payment->payment_referrence;
+                if($variant_id > 0){
+                    $where .= " AND variant_id=:variant_id ";
+                    $param[":variant_id"] = $variant_id;
+                }
+                if($product_id > 0){
+                    $where .= " AND product_id=:product_id ";
+                    $param[":product_id"] = $product_id;
+                }
+                $checkCodes = new DB\codesList($where,$param);
                 if($checkCodes->count() > 0){
-                    Assert::throw(error_message: "Code already generated for payment_ref",critical_error: true);
+                    Assert::throw(error_message: "Code already generated for payment_ref:$payment->payment_referrence",critical_error: true);
                 }
             }
         }
