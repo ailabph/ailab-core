@@ -97,27 +97,47 @@ function core_ajaxReplyHandler(reply, userCallback, silent = false){
     }
 }
 
-function core_modalMessage(message, type, callback){
-    if(typeof callback == 'undefined') callback = function(){};
-
-    let modalTitle = "Alert";
-    let modalClass = "";
-    if(type === "success"){
-        modalTitle = "Success";
-        modalClass = "successBootbox";
+function core_modalMessage(msg, type, _callback, customTitle){
+    if(typeof msg === "undefined") {
+        return;
     }
-    else if(type === "error"){
-        modalTitle = "Error";
-        modalClass = "errorBootbox";
+    if(typeof _callback == 'undefined') {
+        _callback = function () {};
     }
 
-    bootbox.alert({
+    let box = bootbox.alert({
         size: "large",
-        title: modalTitle,
-        message: message,
-        className: modalClass,
-        callback: callback
-    });
+        title: "Title",
+        message: msg,
+        callback: _callback
+    })
+    if(type === "error"){
+        if(typeof customTitle != "undefined"){
+            box.find('.modal-title').text(customTitle);
+        }else{
+            box.find('.modal-title').text("Error");
+        }
+        box.find('.modal-header').addClass("alert-danger");
+        box.find('.btn-primary').removeClass("btn-primary").addClass("btn-danger");
+    }
+    if(type === "success" || type === "good" || type === "ok"){
+        if(typeof customTitle != "undefined"){
+            box.find('.modal-title').text(customTitle);
+        }else{
+            box.find('.modal-title').text("Success");
+        }
+        box.find('.modal-header').addClass("alert-success");
+        box.find('.btn-primary').removeClass("btn-primary").addClass("btn-success");
+    }
+    if(type === "warning" || type === "notice"){
+        if(typeof customTitle != "undefined"){
+            box.find('.modal-title').text(customTitle);
+        }else{
+            box.find('.modal-title').text("Notice");
+        }
+        box.find('.modal-header').addClass("alert-warning");
+        box.find('.btn-primary').removeClass("btn-primary").addClass("btn-warning");
+    }
 }
 
 function core_modalConfirm(msg,callback){
