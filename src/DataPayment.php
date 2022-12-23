@@ -118,7 +118,8 @@ class DataPayment implements Loggable
             created_by: $created_by,
             time_created: $time_created,
             data: $paymentHeaderData);
-        DataImageLog::updateImageRefId($payment->screenshot,$payment->id);
+        // TEMPORARY DISABLE
+        // DataImageLog::updateImageRefId($payment->screenshot,$payment->id);
         return $payment;
     }
 
