@@ -10,8 +10,12 @@ class GeneratorClassPhp
 {
     private static \PDO $connection;
 
-    public static function run()
+    public static function run(bool $restrict_to_local = true)
     {
+        if($restrict_to_local && Config::getEnv() != Config::ENV["local"]) {
+            Logger::add("skip generate php db class, env not local","patch",__LINE__,true);
+            return;
+        }
         $tables = GeneratorExtractTablesData::getTablesInfo();
         $loader = new FilesystemLoader(__DIR__."/../tpl");
         $twig = new Environment($loader);
