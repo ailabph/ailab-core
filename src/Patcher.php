@@ -9,10 +9,10 @@ class Patcher implements Loggable
 {
     public static string $patch_record_json_file = "patch_record.json";
 
-    public static function runPatch(bool $regenerate_classes = true){
+    public static function runPatch(bool $regenerate_classes = false, bool $force_run = false){
         self::addLog("executing patches, current_env:".Config::getEnv()." db:".Config::getConfig()->db_name,__LINE__);
-        $site_patch_executed = self::runSiteLevelPatch();
-        $core_patch_executed = self::runCorePatches();
+        $site_patch_executed = self::runSiteLevelPatch($force_run);
+        $core_patch_executed = self::runCorePatches($force_run);
 
         self::addLog("site_patch_executed:$site_patch_executed",__LINE__);
         self::addLog("core_patch_executed:$site_patch_executed",__LINE__);
@@ -33,7 +33,7 @@ class Patcher implements Loggable
         }
     }
 
-    private static function runSiteLevelPatch():int{
+    private static function runSiteLevelPatch(bool $force_run = false):int{
         $patch_executed = 0;
         $patch_record = self::getPatchJsonFile();
         $patch_dir = self::getPatchDirectory(of_core_module: false);
@@ -54,7 +54,7 @@ class Patcher implements Loggable
             $patch_path = $patch_dir . "/" . $file_name;
 
             self::addLog("executing patch:$key",__LINE__);
-            if(isset($patch_record->{$key_env})) {
+            if(isset($patch_record->{$key_env}) && !$force_run) {
                 self::addLog("skipping, patch already executed on this environment:".Config::getEnv(),__LINE__);
                 continue;
             }
@@ -79,7 +79,7 @@ class Patcher implements Loggable
         return $patch_executed;
     }
 
-    private static function runCorePatches():int{
+    private static function runCorePatches(bool $force_run = false):int{
         $patch_executed = 0;
         self::addLog("running core patches",__LINE__);
         $patch_record = self::getPatchJsonFile();
@@ -101,7 +101,7 @@ class Patcher implements Loggable
             $patch_path = $patch_dir . "/" . $file_name;
 
             self::addLog("executing patch:$key",__LINE__);
-            if(isset($patch_record->{$key_env})) {
+            if(isset($patch_record->{$key_env}) && !$force_run) {
                 self::addLog("skipping, patch already executed",__LINE__);
                 continue;
             }
