@@ -350,7 +350,7 @@ class DataCodes implements Loggable
     #region UTILITIES
     public static function generateAccountNumber(): string{
         do{
-            $accountNumber = Random::getRandomStr(length:9,options:Random::OPTION_ALPHA_SAFE_ALL);
+            $accountNumber = Random::getRandomStr(length:9,options:Random::OPTION_ALPHA_SAFE_HIGH);
             $code = self::get(codes:$accountNumber,throw:false);
         }while($code);
         return $accountNumber;
