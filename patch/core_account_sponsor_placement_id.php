@@ -4,6 +4,7 @@ use Ailabph\AilabCore;
 
 $allAccounts = new DB\accountList(" WHERE 1 ",[]);
 foreach ($allAccounts as $account){
+    $account->propertyExists("sponsor_id");
     if(!empty($account->sponsor_account_id)){
         $sponsor = AilabCore\DataAccount::get($account->sponsor_account_id);
         if($account->sponsor_id != $sponsor->id){
@@ -11,6 +12,7 @@ foreach ($allAccounts as $account){
             $account->save();
         }
     }
+    $account->propertyExists("placement_id");
     if(!empty($account->placement_account_id)){
         $placement = AilabCore\DataAccount::get($account->placement_account_id);
         if($account->placement_id != $placement->id){
