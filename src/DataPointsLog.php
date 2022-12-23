@@ -88,7 +88,7 @@ class DataPointsLog
                 $new_point->level = $from_account->level;
                 $new_point->sponsor_level = $from_account->sponsor_level;
                 $new_point->gen_level = $from_account->sponsor_level - $for_account->sponsor_level;
-                if($new_point->gen_level < 0) Assert::throw("Invalid gen level:$new_point->gen_level");
+                // if($new_point->gen_level < 0) Assert::throw("Invalid gen level:$new_point->gen_level");
             }
 
             if($from_code->product_id > 0){
