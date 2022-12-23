@@ -9,15 +9,20 @@ foreach ($allAccounts as $account){
         $sponsor = AilabCore\DataAccount::get($account->sponsor_account_id);
         if($account->sponsor_id != $sponsor->id){
             $account->sponsor_id = $sponsor->id;
-            $account->save();
         }
+    }
+    else{
+        $account->sponsor_id = 0;
     }
     $account->propertyExists("placement_id");
     if(!empty($account->placement_account_id)){
         $placement = AilabCore\DataAccount::get($account->placement_account_id);
         if($account->placement_id != $placement->id){
             $account->placement_id = $placement->id;
-            $account->save();
         }
     }
+    else{
+        $account->placement_id = 0;
+    }
+    $account->save();
 }
