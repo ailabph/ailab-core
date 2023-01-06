@@ -72,6 +72,20 @@ abstract class TableClass implements TableClassI, Loggable
         return count($this->dataKeysPrimary) > 0 ? $this->dataKeysPrimary[0] : false;
     }
 
+    public function getProperties(): array{
+        return $this->data_properties;
+    }
+
+    public function getPropertiesWithChanges():array{
+        $with_changes = [];
+        foreach ($this->data_properties as $property){
+            if($this->hasChange($property)){
+                $with_changes[] = $property;
+            }
+        }
+        return $with_changes;
+    }
+
     #endregion
 
 
