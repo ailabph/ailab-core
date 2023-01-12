@@ -2,10 +2,21 @@
 
 namespace Ailabph\AilabCore;
 use App\DBClassGenerator\DB;
+use App\DBClassGenerator\DB\codesList;
 use PhpParser\Node\Expr\AssignOp\ShiftLeft;
 
 class DataCodes implements Loggable
 {
+    const STATUS = [
+        "UNUSED" => "o",
+        "USED" => "c",
+    ];
+
+    const TYPE = [
+        "ENTRY" => "e",
+        "PRODUCT" => "p",
+    ];
+
     private static bool $initiated = false;
     private static function init(){
         if(self::$initiated) return;
@@ -19,6 +30,8 @@ class DataCodes implements Loggable
 
         self::$initiated = true;
     }
+
+    #region GETTER
     public static function get(DB\codes|string|int $codes,bool $baseOnly = false, bool $throw = true): DB\codesX|DB\codes|false{
         self::init();
         return DataGeneric::get(
@@ -32,12 +45,22 @@ class DataCodes implements Loggable
         );
     }
 
+    public static function getUnusedPaidEntryCodes(DB\user|string|int $owner): DB\codesList{
+        $owner = DataUser::get($owner);
+        return new codesList(
+            " WHERE owned_by=:owned_by AND code_type=:e AND status=:o AND (special_type IS NULL OR special_type=:empty) "
+            , [":owned_by" => $owner->id, ":e" => "e", ":o" => "o", ":empty" => ""]
+        );
+    }
+
     public static function getProductCodes(int|string|DB\user $owner, bool $unused = true): DB\codesList{
         $owner = DataUser::get($owner);
         return new DB\codesList(
             " WHERE owned_by=:user_id AND status=:status ",
             [":user_id"=>$owner->id,":status"=>($unused?"o":"c")]);
     }
+    #endregion END GETTER
+
 
     #region ENTRY
     public static function createNewEntryCodes(
@@ -339,6 +362,19 @@ class DataCodes implements Loggable
     static public function useProduceCode(DB\account $for_account, DB\codes $prod_code){}
     # TODO: for implementation
     static public function transfer(DB\codes $code, DB\user|string|int $to_user){}
+    static public function setEntryCodeAsUsed(DB\codes|string|int $code, DB\user|string|int $owner): DB\codes{
+        Assert::inTransaction();
+        $code = DataCodes::get($code);
+        $owner = DataUser::get($owner);
+        if($code->code_type != DataCodes::TYPE["ENTRY"]) Assert::throw("code:$code->code is not of entry type");
+        if($code->status != DataCodes::STATUS["UNUSED"]) Assert::throw("code:$code->code is already used");
+        if($code->owned_by != $owner->id) Assert::throw("code:$code->code is not owned by $owner->username");
+        $code->used_by = $owner->id;
+        $code->time_used = TimeHelper::getCurrentTime()->getTimestamp();
+        $code->status = DataCodes::STATUS["USED"];
+        $code->save();
+        return $code;
+    }
 
     #endregion END OF PROCESS
 
