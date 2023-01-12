@@ -368,7 +368,7 @@ class DataCodes implements Loggable
         $owner = DataUser::get($owner);
         if($code->code_type != DataCodes::TYPE["ENTRY"]) Assert::throw("code:$code->code is not of entry type");
         if($code->status != DataCodes::STATUS["UNUSED"]) Assert::throw("code:$code->code is already used");
-        if($code->owned_by != $owner->id) Assert::throw("code:$code->code is not owned by $owner->username");
+//        if($code->owned_by != $owner->id) Assert::throw("code:$code->code is not owned by $owner->username");
         $code->used_by = $owner->id;
         $code->time_used = TimeHelper::getCurrentTime()->getTimestamp();
         $code->status = DataCodes::STATUS["USED"];
