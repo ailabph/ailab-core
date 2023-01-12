@@ -124,7 +124,7 @@ class DataAccount
         $target_account->dna = $target_account->position.$target_account->id;
         if(!empty($target_account->placement_account_id)){
             $placement = DataAccount::get($target_account->placement_account_id);
-            if($placement->dna) Assert::throw("placement upline:$placement->account_code has an empty dna");
+            if(empty($placement->dna)) Assert::throw("placement upline:$placement->account_code has an empty dna");
             if(!empty($target_account->dna)) Assert::throw("placement upline information already set");
             $target_account->dna = $placement->dna."_".$target_account->position.$target_account->id;
         }
