@@ -71,6 +71,11 @@ class DataCodes implements Loggable
         for($x=0;$x<$qty;$x++){
             $code = self::createNewEntryCode($variant,$owner,$payment,$order_header,$order_detail);
             self::checkCodeIntegrity($code);
+            if($payment instanceof DB\payment){
+                if(in_array($payment->payment_mode,["cd","fs"])){
+                    $code->special_type = $payment->payment_mode;
+                }
+            }
             $code->save();
             $user_from = $order_header ? DataUser::get($order_header->user_id) : null;
             DataCodeOwnershipLog::addLog(DB\code_ownership_logX::$ACTIONS["purchase"],$code,$user_from,$owner,$code->time_purchased > 0 ? $code->time_purchased : $code->time_generated);
@@ -84,25 +89,16 @@ class DataCodes implements Loggable
         DB\package_variant $variant,
         ...$args,
     ):DB\codesX{
-        $owner = null;
-        $payment = null;
-        $order_header = null;
-        $order_detail = null;
         $approved_by_user = null;
-        foreach ($args as $arg){
-            if($arg instanceof DB\user){
-                $owner = $arg;
-            }
-            else if($arg instanceof DB\payment){
-                $payment = $arg;
-            }
-            else if($arg instanceof DB\order_header){
-                $order_header = $arg;
-            }
-            else if($arg instanceof DB\order_detail){
-                $order_detail = $arg;
-            }
-        }
+
+        /** @var DB\user $owner */
+        $owner = DataGeneric::getDataObjectsFromArray($args,"user");
+        /** @var DB\payment $payment */
+        $payment = DataGeneric::getDataObjectsFromArray($args,"payment");
+        /** @var DB\order_header $order_header */
+        $order_header = DataGeneric::getDataObjectsFromArray($args,"order_header");
+        /** @var DB\order_detail $order_detail */
+        $order_detail = DataGeneric::getDataObjectsFromArray($args,"order_detail");
 
         $new_code = new DB\codesX();
         if($payment){
