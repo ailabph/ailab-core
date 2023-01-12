@@ -121,15 +121,19 @@ class DataAccount
 
     public static function setDnaInfo(DB\account $target_account): DB\account{
         Assert::inTransaction();
+        $target_account->dna = $target_account->position.$target_account->id;
         if(!empty($target_account->placement_account_id)){
             $placement = DataAccount::get($target_account->placement_account_id);
+            if($placement->dna) Assert::throw("placement upline:$placement->account_code has an empty dna");
             if(!empty($target_account->dna)) Assert::throw("placement upline information already set");
-            $target_account->dna = empty($placement->dna) ? $target_account->position . $target_account->id : $placement->dna . "_" . $target_account->position . $target_account->id;
+            $target_account->dna = $placement->dna."_".$target_account->position.$target_account->id;
         }
+        $target_account->sponsor_dna = $target_account->id;
         if(!empty($target_account->sponsor_account_id)){
             $sponsor = DataAccount::get($target_account->sponsor_account_id);
+            if(empty($sponsor->sponsor_dna)) Assert::throw("sponsor upline:$sponsor->account_code has an empty sponsor dna");
             if(!empty($target_account->sponsor_dna)) Assert::throw("sponsor dna information already set:$target_account->sponsor_dna");
-            $target_account->sponsor_dna = empty($sponsor->sponsor_dna) ? $target_account->id : $sponsor->sponsor_dna . "_" . $target_account->id;
+            $target_account->sponsor_dna = $sponsor->sponsor_dna."_".$target_account->id;
         }
         $target_account->save();
         return $target_account;
