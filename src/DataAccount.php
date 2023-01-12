@@ -110,7 +110,7 @@ class DataAccount
         $other_upline = new DB\accountList(" WHERE down_left=:code OR down_right=:code ",[":code"=>$downline_code->code]);
         if($other_upline->count() > 0) Assert::throw("$downline_code->code upline information is already set");
 
-        $position_word = array_search($position,DataAccount::POSITION);
+        $position_word = strtolower(array_search($position,DataAccount::POSITION));
         $position_property = "down_".$position_word;
         if(!property_exists($upline,$position_property)) Assert::throw("property:$position_property does not exist in account class");
         if(!empty($upline->{$position_property})) Assert::throw("upline placement:$upline->account_code $position_word downline position is not available. Currently occupied by account:".$upline->{$position_property});
@@ -128,7 +128,7 @@ class DataAccount
         }
         if(!empty($target_account->sponsor_account_id)){
             $sponsor = DataAccount::get($target_account->sponsor_account_id);
-            if(!empty($sponsor->sponsor_dna)) Assert::throw("sponsor upline information already set");
+            if(!empty($target_account->sponsor_dna)) Assert::throw("sponsor dna information already set:$target_account->sponsor_dna");
             $target_account->sponsor_dna = empty($sponsor->sponsor_dna) ? $target_account->id : $sponsor->sponsor_dna . "_" . $target_account->id;
         }
         $target_account->save();
@@ -304,6 +304,7 @@ class DataAccount
 
     public static function activateNewUser(int $user_id, bool $strict = true): array|string
     {
+        Assert::inTransaction();
         $target_user = DataUser::get($user_id);
 
         // user group must be new to activate
