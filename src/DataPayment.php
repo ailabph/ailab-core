@@ -293,6 +293,7 @@ class DataPayment implements Loggable
                 $processed_payment = true;
             }
         }
+        DataAccount::activateNewUser($payment->created_by,false);
 
         # GENERATE CENTER CREDITS
         if ($payment->purchase_type == DB\paymentX::$PURCHASE_TYPE["ecoin"]) {
