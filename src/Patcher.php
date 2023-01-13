@@ -11,6 +11,18 @@ class Patcher implements Loggable
 
     public static function runPatch(bool $regenerate_classes = false, bool $force_run = false){
         self::addLog("executing patches, current_env:".Config::getEnv()." db:".Config::getConfig()->db_name,__LINE__);
+
+        // if local, patch also the test environment
+        if(Config::getEnv() == Config::ENV["local"]){
+            Config::resetCache();
+            Connection::reset();
+            Config::overrideEnv(Config::ENV["test"]);
+            $site_patch_executed = self::runSiteLevelPatch($force_run);
+            $core_patch_executed = self::runCorePatches($force_run);
+            Config::overrideEnv(Config::ENV["local"]);
+            Config::resetCache();
+            Connection::reset();
+        }
         $site_patch_executed = self::runSiteLevelPatch($force_run);
         $core_patch_executed = self::runCorePatches($force_run);
 
