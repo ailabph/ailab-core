@@ -169,7 +169,9 @@ class DataPayment implements Loggable
 
         $payment->details = new DB\payment_detailsList(" WHERE 0 ", []);
         foreach ($paymentDetails as $detail){
-            $product_id = Tools::parsePropertyFromObject($detail,"prodid");
+            $product_id = Tools::parsePropertyFromObject($detail,"prodid",false);
+            if(!$product_id) $product_id = Tools::parsePropertyFromObject($detail,"prod_id",true);
+            if(!$product_id) $product_id = Tools::parsePropertyFromObject($detail,"product_id");
             $qty = Tools::parsePropertyFromObject($detail,"qty");
 
             $product = DataProducts::get($product_id,false);
