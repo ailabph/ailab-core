@@ -416,6 +416,15 @@ class Tools
                 }catch (\TypeError $e){}
             }
         }
+        foreach ($from_data as $key => $value){
+            $property_with_prefix = $prefix . $key;
+            if(property_exists($to_object,$property_with_prefix)){
+                // suppress type error
+                try{
+                    $to_object->{$property_with_prefix} = $value;
+                }catch (\TypeError $e){}
+            }
+        }
     }
 
     public static function parseKeyArray(array $data, string $key, bool $throw = true){
