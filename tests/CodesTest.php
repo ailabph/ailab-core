@@ -21,8 +21,7 @@ class CodesTest extends TestCase
         AilabCore\Connection::rollback();
     }
 
-    public function createVariant(): DB\package_variantX
-    {
+    public static function createVariant(): DB\package_variantX{
         $package = new DB\package_header();
         $package->created_by = 0;
         $package->time_created = 0;
@@ -41,7 +40,7 @@ class CodesTest extends TestCase
         return $variant;
     }
 
-    public function createProduct(): DB\products{
+    public static function createProduct(): DB\products{
         $prod = new DB\products();
         $prod->unit_price = 100;
         $prod->price = 1000;
@@ -54,7 +53,7 @@ class CodesTest extends TestCase
         return $prod;
     }
 
-    public function createAdmin():DB\userX{
+    public static function createAdmin(): DB\userX{
         $user = AilabCore\DataUser::create([]);
         $user->username = "admin_".AilabCore\Random::getRandomStr();
         $user->usergroup = "admin";
@@ -64,8 +63,8 @@ class CodesTest extends TestCase
     }
 
     public function testCreateEntryCodes(){
-        $variant = $this->createVariant();
-        $admin = $this->createAdmin();
+        $variant = CodesTest::createVariant();
+        $admin = CodesTest::createAdmin();
         $payment = AilabCore\DataPayment::create("e","cash",100,$admin->id);
         $payment->approved_by = $admin->id;
         $payment->save();
@@ -74,8 +73,8 @@ class CodesTest extends TestCase
     }
 
     public function testCreateProductCodes(){
-        $prod = $this->createProduct();
-        $admin = $this->createAdmin();
+        $prod = CodesTest::createProduct();
+        $admin = CodesTest::createAdmin();
         $payment = AilabCore\DataPayment::create("p","cash",0,$admin->id);
         $payment = AilabCore\DataPayment::createProductPayment($payment,[
             (object)["prodid"=>$prod->id,"qty"=>2]
