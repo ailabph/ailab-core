@@ -28,6 +28,7 @@ class DataPackageVariant
     }
 
     public static function getDefault(int|string|DB\package_header $package_header): DB\package_variantX{
+        $package_header = DataPackage::get($package_header);
         $topVariant = new DB\package_variantList(
             " WHERE package_id=:package_id"
             ,[":package_id"=>$package_header->id]," ORDER BY id ASC LIMIT 1");
