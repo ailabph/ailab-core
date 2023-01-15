@@ -35,6 +35,20 @@ class DataPayment implements Loggable
         self::$initiated = true;
     }
 
+    protected static string $HOOK_AFTER_ADD_NEW_PAYMENT_DETAIL_PRODUCT = "";
+    /** Usage: arg(payment_details &$payment_detail) */
+    public static function addHookAfterAddNewPaymentDetailProduct(string $callable){
+        if(!empty(self::$HOOK_AFTER_ADD_NEW_PAYMENT_DETAIL_PRODUCT)) Assert::throw("hook already set");
+        Assert::isNotEmpty($callable,"callable");
+        Assert::isCallable($callable);
+        self::$HOOK_AFTER_ADD_NEW_PAYMENT_DETAIL_PRODUCT = $callable;
+    }
+    protected static function hookAfterAddNewPaymentDetailProduct(DB\payment_details &$payment_detail){
+        if(!empty(self::$HOOK_AFTER_ADD_NEW_PAYMENT_DETAIL_PRODUCT) && Assert::isCallable(self::$HOOK_AFTER_ADD_NEW_PAYMENT_DETAIL_PRODUCT)){
+            call_user_func_array(self::$HOOK_AFTER_ADD_NEW_PAYMENT_DETAIL_PRODUCT,["payment_detail"=>&$payment_detail]);
+        }
+    }
+
     public static float $PRICE_DISCOUNT_OVERRIDE = 0;
 
     #region GETTERS
@@ -58,8 +72,6 @@ class DataPayment implements Loggable
     #endregion END GETTERS
 
     #region ACTIONS
-
-
     static public function create(
         string $purchase_type,
         string $payment_mode,
@@ -186,6 +198,7 @@ class DataPayment implements Loggable
             $det->total_amount = bcmul($det->qty, $det->unit_price, 2);
             $det->status = "o";
             $det->save();
+            self::hookAfterAddNewPaymentDetailProduct($det);
             $payment->details->list[] = $det;
             $payment->amount = bcadd($payment->amount, $det->total_amount, 2);
         }
@@ -308,28 +321,25 @@ class DataPayment implements Loggable
 
         # GENERATE INVENTORY ENTRY
         if ($payment->purchase_type == DB\paymentX::$PURCHASE_TYPE["inventory_entry"]) {
-            Assert::throw("not yet implemented");
-//            $inventory_order = inventory_orderX_get::record($payment->inventory_order_id);
-//            if ($inventory_order->status != inventory_orderX::$STATUS_ENUM["status_new"]) {
-//                assert::throw2("unable to approve payment, inventory order status is not new");
-//            }
-//            $inventory_order->time_updated = time();
-//            $inventory_order->approved_by = $staff_id;
-//            $inventory_order->notes = $payment->approver_notes;
-//            $inventory_order->screenshots = $payment->screenshot;
-//            $inventory_order->status = inventory_orderX::$STATUS_ENUM["status_paid"];
-//            $inventory_order->save();
-//            $processed_payment = true;
+            $order = DataInventoryOrder::get($payment->inventory_order_id);
+            $order->time_updated = TimeHelper::getCurrentTime()->getTimestamp();
+            $order->approved_by = DB\tools::getCurrentUser()->id;
+            $order->time_approved = TimeHelper::getCurrentTime()->getTimestamp();
+            $order->notes = $payment->approver_notes;
+            $order->screenshots = $payment->screenshot;
+            $order->status = "a";
+            $order->save();
+
+            $delivery = DB\delivery_headerX::createStandardDeliveryFromApprovedPayment($payment);
+            DB\delivery_headerX::addInventoryAfterRelease($delivery,$order);
+            DB\center_headerX_operations::computeCenterUplineCommission($delivery->order->user,$delivery->order);
+            DB\coin_headerX::addRebate($delivery->order);
+            $processed_payment = true;
         }
 
         if (!$processed_payment) {
             Assert::throw("payment approval not complete. process possible not yet implemented");
         }
-
-//        if ($payment->purchase_type != DB\paymentX::$PURCHASE_TYPE["ecoin"]) {
-//            Assert::throw("not yet implemented");
-//            delivery_headerX::createStandardDeliveryFromApprovedPayment($payment);
-//        }
 
         # CREDITS SYSTEM
         if(DataTopUpCredits::topUpSystemEnabled()){
@@ -339,15 +349,7 @@ class DataPayment implements Loggable
 
         return $payment;
     }
-
-
     #endregion END ACTIONS
-
-
-
-
-
-
 
     #region CHECKS
     private static function assertValidPurchaseType(string $purchase_type){
