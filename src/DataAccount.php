@@ -15,6 +15,20 @@ class DataAccount
         self::$initiated = true;
     }
 
+    protected static string $HOOK_AFTER_CREATE_ACCOUNT;
+    /** Usage: argument(DB\account &$account, DB\codes &$code_used) */
+    public static function addHookAfterCreateAccount(string $callable){
+        if(!empty(self::$HOOK_AFTER_CREATE_ACCOUNT)) Assert::throw("hook AFTER_CREATE_ACCOUNT is already set");
+        if(!empty($callable) && Assert::isCallable($callable)){
+            self::$HOOK_AFTER_CREATE_ACCOUNT = $callable;
+        }
+    }
+    protected static function callHookAfterCreateAccount(DB\account &$account, DB\codes &$code_used){
+        if(!empty(self::$HOOK_AFTER_CREATE_ACCOUNT) && Assert::isCallable(self::$HOOK_AFTER_CREATE_ACCOUNT)){
+            call_user_func_array(self::$HOOK_AFTER_CREATE_ACCOUNT,["account"=>&$account,"code_used"=>&$code_used]);
+        }
+    }
+
     const POSITION = [
         "LEFT" => "l",
         "RIGHT" => "r",
@@ -292,6 +306,8 @@ class DataAccount
         $code->is_encode = "y";
         $code->save();
 
+        self::callHookAfterCreateAccount($account,$code);
+
         #region SETUP ADDITIONAL ACCOUNTS
         if($code->variant_id > 0){
             $variant = DataPackageVariant::get($code->variant_id);
@@ -370,15 +386,15 @@ class DataAccount
     }
 
     # TODO: for implementation
-    public static function encode(DB\user $user, DB\codes $entry_code, $placement, $position, $sponsor): DB\account{
-        // hook before encode
-        // hook after encode
-    }
+//    public static function encode(DB\user $user, DB\codes $entry_code, $placement, $position, $sponsor): DB\account{
+//        // hook before encode
+//        // hook after encode
+//    }
     # TODO: for implementation
-    public static function upgrade(DB\account $account, DB\codes $upgrade_code): account{
-        // hook before upgrade
-        // hook after upgrade
-    }
+//    public static function upgrade(DB\account $account, DB\codes $upgrade_code): account{
+//        // hook before upgrade
+//        // hook after upgrade
+//    }
 
     #endregion END OF PROCESS
 }
