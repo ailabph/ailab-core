@@ -17,6 +17,19 @@ class DataCodes implements Loggable
         "PRODUCT" => "p",
     ];
 
+    private static string $HOOK_AFTER_ENTRY_CODE_CREATED;
+    /** Usage: arg(DB/codes &$code) */
+    public static function addHookAfterEntryCodeCreated(string $callable){
+        if(!empty(self::$HOOK_AFTER_ENTRY_CODE_CREATED)) Assert::throw("hook already set for HOOK_AFTER_ENTRY_CODE_CREATED");
+        Assert::isCallable($callable,true);
+        self::$HOOK_AFTER_ENTRY_CODE_CREATED = $callable;
+    }
+    protected static function callHookAfterEntryCodeCreated(DB\codes &$code){
+        if(!empty(self::$HOOK_AFTER_ENTRY_CODE_CREATED) && Assert::isCallable(self::$HOOK_AFTER_ENTRY_CODE_CREATED)){
+            call_user_func_array(self::$HOOK_AFTER_ENTRY_CODE_CREATED,["code"=>&$code]);
+        }
+    }
+
     private static bool $initiated = false;
     private static function init(){
         if(self::$initiated) return;
@@ -133,8 +146,11 @@ class DataCodes implements Loggable
             if($payment->ne_order > 0){
                 $new_code->ne_order_id = $payment->ne_order;
             }
+            if(in_array($payment->payment_mode,["fs","cd"])){
+                $new_code->special_type = $payment->payment_mode;
+            }
         }
-        else if($order_header){
+        elseif($order_header){
             if(is_null($order_detail) && !($order_detail instanceof DB\order_detail)){
                 Assert::throw(error_message:"order_detail is required",critical_error: true);
             }
@@ -166,6 +182,9 @@ class DataCodes implements Loggable
         $new_code->owned_by = $owner->id;
         $new_code->approved_by = $approved_by_user->id;
         $new_code->save();
+
+        self::callHookAfterEntryCodeCreated($new_code);
+
         return $new_code;
     }
     #endregion END ENTRY
