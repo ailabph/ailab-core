@@ -49,6 +49,20 @@ class DataPayment implements Loggable
         }
     }
 
+    protected static string $HOOK_AFTER_APPROVE_PAYMENT = "";
+    /** Usage: arg(DB\payment &$payment) */
+    public static function addHookAfterApprovePayment(string $callable){
+        if(!empty(self::$HOOK_AFTER_APPROVE_PAYMENT)) Assert::throw("hook already set");
+        Assert::isNotEmpty($callable,"callable");
+        Assert::isCallable($callable);
+        self::$HOOK_AFTER_APPROVE_PAYMENT = $callable;
+    }
+    protected static function hookAfterApprovePayment(DB\payment &$payment){
+        if(!empty(self::$HOOK_AFTER_APPROVE_PAYMENT) && Assert::isCallable(self::$HOOK_AFTER_APPROVE_PAYMENT,false)){
+            call_user_func_array(self::$HOOK_AFTER_APPROVE_PAYMENT,["payment"=>&$payment]);
+        }
+    }
+
     public static float $PRICE_DISCOUNT_OVERRIDE = 0;
 
     #region GETTERS
@@ -346,6 +360,8 @@ class DataPayment implements Loggable
             $credit_header = DataTopUpCredits::get();
             DataTopUpCredits::useCredits($payment);
         }
+
+        self::hookAfterApprovePayment($payment);
 
         return $payment;
     }
