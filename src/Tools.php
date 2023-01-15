@@ -3,7 +3,6 @@
 namespace Ailabph\AilabCore;
 
 use Exception;
-use Ailabph\AilabCore\UserI;
 use App\DBClassGenerator\DB;
 
 class Tools
