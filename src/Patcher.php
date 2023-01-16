@@ -14,17 +14,24 @@ class Patcher implements Loggable
 
         // if local, patch also the test environment
         if(Config::getEnv() == Config::ENV["local"]){
+            if(Config::getConfig()->verbose_log) self::addLog("local env detected, attempting to run patches on both local and test",__LINE__);
+            if(Config::getConfig()->verbose_log) self::addLog("setting env to test and running patch",__LINE__);
             Config::resetCache();
             Connection::reset();
+            Config::resetOverrideEnv();
             Config::overrideEnv(Config::ENV["test"]);
             $site_patch_executed = self::runSiteLevelPatch($force_run);
             $core_patch_executed = self::runCorePatches($force_run);
-            Config::overrideEnv(Config::ENV["local"]);
+
+            if(Config::getConfig()->verbose_log) self::addLog("setting env to local and running patch",__LINE__);
             Config::resetCache();
             Connection::reset();
+            Config::resetOverrideEnv();
+            Config::overrideEnv(Config::ENV["local"]);
         }
         $site_patch_executed = self::runSiteLevelPatch($force_run);
         $core_patch_executed = self::runCorePatches($force_run);
+        if(Config::getConfig()->verbose_log) self::addLog("run patch done",__LINE__);
 
         if($site_patch_executed > 0 || $core_patch_executed > 0 || Config::getConfig()->verbose_log){
             self::addLog("site_patch_executed:$site_patch_executed",__LINE__);
@@ -68,16 +75,16 @@ class Patcher implements Loggable
             $key_env = Config::getEnv() . "_" .$key;
             $patch_path = $patch_dir . "/" . $file_name;
 
-            if(Config::getConfig()->verbose_log) self::addLog("executing patch:$key",__LINE__);
+            if(Config::getConfig()->verbose_log) self::addLog("EXECUTING patch:$key | env:".Config::getEnv()." | db:".Config::getConfig()->db_name,__LINE__);
             if(isset($patch_record->{$key_env}) && !$force_run) {
-                if(Config::getConfig()->verbose_log) self::addLog("skipping, patch already executed on this environment:".Config::getEnv(),__LINE__);
+                if(Config::getConfig()->verbose_log) self::addLog("skipping, patch already executed on this environment:".Config::getEnv()." key:$key_env",__LINE__);
                 continue;
             }
 
             // suppress errors to continue running other patches
             try{
-                self::addLog("running patch",__LINE__);
-                require_once($patch_path);
+                self::addLog("running patch:{$file_name}",__LINE__);
+                require($patch_path);
                 $patch_record->{$key_env} = time();
                 $patch_executed++;
                 self::addLog("patch done",__LINE__);
@@ -115,7 +122,7 @@ class Patcher implements Loggable
             $key_env = Config::getEnv() . "_" .$key;
             $patch_path = $patch_dir . "/" . $file_name;
 
-            if(Config::getConfig()->verbose_log) self::addLog("executing patch:$key",__LINE__);
+            if(Config::getConfig()->verbose_log) self::addLog("EXECUTING patch:$key | env:".Config::getEnv()." | db:".Config::getConfig()->db_name,__LINE__);
             if(isset($patch_record->{$key_env}) && !$force_run) {
                 if(Config::getConfig()->verbose_log) self::addLog("skipping, patch already executed",__LINE__);
                 continue;
@@ -123,8 +130,8 @@ class Patcher implements Loggable
 
             // suppress errors to continue running other patches
             try{
-                self::addLog("running patch",__LINE__);
-                require_once($patch_path);
+                self::addLog("running patch:{$file_name}",__LINE__);
+                require($patch_path);
                 $patch_record->{$key_env} = time();
                 $patch_executed++;
                 self::addLog("patch done",__LINE__);
