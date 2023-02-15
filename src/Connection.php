@@ -34,7 +34,7 @@ class Connection
     protected static function init():void{
         self::syncConnections();
         global $conn;
-        if(is_null(self::$primary_connection)){
+        if(is_null(self::$primary_connection) || is_null(self::$secondary_connection)){
             try{
                 self::$primary_connection = new PDO(
                     "mysql:host=".Config::getConfig()->db_host.";dbname=".Config::getConfig()->db_name,
