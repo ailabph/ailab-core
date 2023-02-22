@@ -15,6 +15,7 @@ class DataAccount
         self::$initiated = true;
     }
 
+    //region HOOKS
     protected static string $HOOK_AFTER_CREATE_ACCOUNT;
     /** Usage: argument(DB\account &$account, DB\codes &$code_used) */
     public static function addHookAfterCreateAccount(string $callable){
@@ -28,6 +29,21 @@ class DataAccount
             call_user_func_array(self::$HOOK_AFTER_CREATE_ACCOUNT,["account"=>&$account,"code_used"=>&$code_used]);
         }
     }
+
+    protected static string $HOOK_AFTER_UPGRADE_ACCOUNT;
+    /** Usage: argument(DB\account &$account, DB\codes &$code_used) */
+    public static function addHookAfterUpgradeAccount(string $callable){
+        if(!empty(self::$HOOK_AFTER_UPGRADE_ACCOUNT)) Assert::throw("hook HOOK_AFTER_UPGRADE_ACCOUNT is already set");
+        if(!empty($callable) && Assert::isCallable($callable)){
+            self::$HOOK_AFTER_UPGRADE_ACCOUNT = $callable;
+        }
+    }
+    protected static function callHookAfterUpgradeAccount(DB\account &$account, DB\codes &$code_used){
+        if(!empty(self::$HOOK_AFTER_UPGRADE_ACCOUNT) && Assert::isCallable(self::$HOOK_AFTER_UPGRADE_ACCOUNT)){
+            call_user_func_array(self::$HOOK_AFTER_UPGRADE_ACCOUNT,["account"=>&$account,"code_used"=>&$code_used]);
+        }
+    }
+    //endregion HOOKS
 
     const POSITION = [
         "LEFT" => "l",
@@ -144,6 +160,9 @@ class DataAccount
     #endregion END OF GETTERS
 
     #region CHECKS
+    public static function validBinaryPosition(string $side){
+        if(strtolower($side) != "l" && strtolower($side) != "r") Assert::throw("invalid binary position");
+    }
     public static function checkIntegrityAndSave(DB\account &$account){
         if($account->sponsor_id < 0 && empty($account->sponsor_account_id)){
             $account->sponsor_id = 0;
@@ -189,6 +208,42 @@ class DataAccount
         $target_account->save();
         return $target_account;
     }
+
+    public static function correctAccountStructure(DB\account $current_account, DB\codes $new_code): bool{
+        Assert::inTransaction();
+        $current_account->refresh();
+        // update upline down_left/down_right
+        if(!empty($current_account->placement_account_id)){
+            self::validBinaryPosition($current_account->position);
+            $upline = DataAccount::get($current_account->placement_account_id);
+
+            $pos_word = $current_account->position == "r" ? "right" : "left";
+            $pos_property = "down_".$pos_word;
+            if(!property_exists($upline,$pos_property)) AilabCore\Assert::throw("property:$pos_property does not exist");
+            $upline->{$pos_property} = $new_code->code;
+            $upline->save();
+        }
+
+        $downlinePlacements = new DB\accountList(
+            " WHERE placement_account_id=:code ",
+            [":code"=>$current_account->account_code]);
+        while($downline = $downlinePlacements->fetch()){
+            $downline->placement_account_id = $new_code->code;
+            $downline->placement_id = $current_account->id;
+            $downline->save();
+        }
+
+        $downlineSponsored = new DB\accountList(
+            " where sponsor_account_id=:code ",
+            [":code"=>$current_account->account_code]
+        );
+        while($sponsored = $downlineSponsored->fetch()){
+            $sponsored->sponsor_account_id = $new_code->code;
+            $sponsored->sponsor_id = $current_account->id;
+            $sponsored->save();
+        }
+        return true;
+    }
     #endregion END OF UTILITIES
 
     #region PROCESS
@@ -201,8 +256,19 @@ class DataAccount
         $user = DataUser::get($user);
         $code = DataCodes::get($code);
         if($code->code_type !== DataCodes::TYPE["ENTRY"]) Assert::throw("unable to encode bundle, code is not of entry type");
-        $placement = DataAccount::get($placement);
-        $sponsor = DataAccount::get($sponsor);
+        if(is_int($placement) && $placement == 0){
+            $placement = new DB\account();
+        }
+        else{
+            $placement = DataAccount::get($placement);
+        }
+        if(is_int($sponsor) && $sponsor == 0){
+            $sponsor = new DB\account();
+        }
+        else{
+            $sponsor = DataAccount::get($sponsor);
+        }
+
         if(!empty($placement->down_left) || !empty($placement->down_right)) Assert::throw("Placement account must have no downlines");
         $variant = DataPackageVariant::get($code->variant_id);
         if(empty($variant->bundle)) Assert::throw("variant:$variant->package_tag is not a bundle type");
@@ -231,7 +297,7 @@ class DataAccount
         while($bundle_code = $bundle_codes->fetch()){
             $side = empty($placement->down_left) ? "l" : "r";
             $accountCreated++;
-            $newAccount = DataAccount::createAccount(user:$user,code:$bundle_code,placement:$placement,sponsor:$sponsor,side:$side,override_placement: false,custom_time: $code->time_used,autoGenerated:true);
+            $newAccount = DataAccount::createAccount(user:$user,code:$bundle_code,placement:$placement->isNew() ? null : $placement,sponsor:$sponsor->isNew() ? null : $sponsor,side:$side,override_placement: false,custom_time: $code->time_used,autoGenerated:true);
             $placement->refresh();
             $newAccounts["a_$accountCreated"] = $newAccount;
             if(!empty($placement->down_left) && !empty($placement->down_right)){
@@ -425,6 +491,130 @@ class DataAccount
         DataSms::addSmsQueue($target_user->contact,"Congratulations! Your account has been Activated!");
 
         return [$target_user, $new_account];
+    }
+
+    public static function upgradeAccount(array $args){
+        Assert::inTransaction();
+        $current_account_code = Tools::parseKeyArray($args,"current_account_code",true);
+        $new_code = Tools::parseKeyArray($args,"new_code",true);
+        if(isset($args["user"]) && $args["user"] instanceof DB\user){
+            $user = $args["user"];
+        }
+        else{
+            Session::assertIsLoggedIn();
+            $user = Session::getCurrentUser();
+        }
+
+        $current_account = DataAccount::get($current_account_code);
+        $code_to_use = DataCodes::get($new_code);
+        if($code_to_use->status != "o") Assert::throw("Code already used");
+        if($code_to_use->code_type != "e") Assert::throw("Code is not an Entry package");
+
+        $entry_expiry = Config::getCustomOption("entry_expiry",false);
+        if(empty($code_to_use->special_type) && $entry_expiry > 0){
+            $expiry = $code_to_use->time_generated + $entry_expiry;
+            if(TimeHelper::getCurrentTime()->getTimestamp() >= $expiry){
+                Assert::throw("Code is already expired");
+            }
+        }
+
+        $package = DataPackage::get($code_to_use->package_id);
+        $variant = DataPackageVariant::get($code_to_use->variant_id);
+        if($current_account->special_type == "cd") Assert::throw("cannot upgrade an unpaid cd account");
+        if($code_to_use->special_type == "cd") Assert::throw("unable to use cd code to upgrade");
+
+        $has_downline = !empty($current_account->down_left) || !empty($current_account->down_right);
+        if(!empty($variant->bundle) && $has_downline){
+            Assert::throw2("Unable to use bundled code to upgrade if you have downlines");
+        }
+
+        if($current_account->user_id != $user->id && $user->usergroup != "admin") Assert::throw("not authorized to upgrade another users account");
+        if($code_to_use->owned_by != $user->id && $user->usergroup != "admin") Assert::throw("not authorized to upgrade using code you don't own");
+
+        // adjust structure
+        self::correctAccountStructure($current_account,$code_to_use);
+
+        // change current account details
+        $current_account->account_code = $code_to_use->code;
+        $current_account->account_pin = $code_to_use->pin;
+        $current_account->account_type = $package->package_tag;
+        $current_account->special_type = $code_to_use->special_type;;
+        $current_account->time_compute_done = 0;
+        $current_account->save();
+
+        // set code to used
+        $code_to_use->time_used = TimeHelper::getCurrentTime()->getTimestamp();
+        $code_to_use->used_by = $current_account->user_id;
+        $code_to_use->placement_dna = $current_account->dna;
+        $code_to_use->sponsor_dna = $current_account->sponsor_dna;
+        $code_to_use->account_id = $current_account->id;
+        $code_to_use->status = "c";
+        $code_to_use->is_upgrade = "y";
+        $code_to_use->save();
+
+        // set meta history
+        $meta = new DB\meta_history();
+        $meta->metaname = "account_swap_history";
+        $meta->metaid = $current_account->id;
+        $meta->meta_from = $current_account->account_code;
+        $meta->meta_to = $code_to_use->code;
+        if(Tools::isLoggedIn()){
+            $user_id = Session::getCurrentUser()->id;
+        }else{
+            $user_id = $current_account->user_id;
+        }
+        $meta->editedby = $user_id;
+        $meta->timeadded = TimeHelper::getCurrentTime()->getTimestamp();
+        $meta->meta_hash = Random::getRandomStr(60);
+        $meta->save();
+
+        // log upgrade
+        self::recordAccountUpgrade($current_account,$code_to_use);
+
+        // add log
+        $account_user = DataUser::get($current_account->user_id);
+        $log = new DB\code_ownership_log();
+        $log->code          = $code_to_use->code;
+        $log->code_type     = $code_to_use->code_type;
+        $log->prod_name     = $variant->package_name;
+        $log->action        = "use";
+        $log->from_userId   = 0;
+        $log->from_username = "";
+        $log->to_userId     = $account_user->id;
+        $log->to_username   = $account_user->username;
+        $log->time_added    = $code_to_use->time_used;
+        $log->save();
+
+        // hook
+        self::callHookAfterUpgradeAccount($current_account,$code_to_use);
+
+        if(!empty($variant->bundle)){
+            $codes = DataAccount::encodeBundleCode(
+                $user,
+                $code_to_use,
+                $current_account,
+                $current_account->sponsor_account_id > 0 ? $current_account->sponsor_account_id : 0);
+        }
+
+    }
+
+    public static function recordAccountUpgrade(DB\account $current_account,DB\codes $new_code): bool
+    {
+        Assert::inTransaction();
+        $upgrade_log = new DB\upgrade_account_log();
+        $upgrade_log->account_id = $current_account->id;
+        $upgrade_log->from_code = $current_account->account_code;
+        $upgrade_log->to_code = $new_code->code;
+        if(Tools::isLoggedIn()){
+            $user_id = Session::getCurrentUser()->id;
+        }
+        else{
+            $user_id = $current_account->user_id;
+        }
+        $upgrade_log->upgraded_by = $user_id;
+        $upgrade_log->time_upgraded = TimeHelper::getCurrentTime()->getTimestamp();
+        $upgrade_log->save();
+        return true;
     }
 
     # TODO: for implementation
